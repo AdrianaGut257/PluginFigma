@@ -39,12 +39,12 @@ async function allFonts(): Promise<Font[]> {
 const norm = (s: string) => s.toLowerCase().replace(/[\s\-_]/g, "");
 const WEIGHT_MAP: Record<string, number> = {
   thin: 100,
-  extralight: 200
+  extralight: 200,
   light: 300,
   regular: 400,
   normal: 400,
   medium: 500,
-  semibold: 600
+  semibold: 600,
   bold: 700,
   extrabold: 800,
   black: 900,
