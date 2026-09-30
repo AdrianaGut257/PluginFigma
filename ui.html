@@ -1,17 +1,294 @@
-<h2>Shape Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+Ui · HTML
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg: #fff;
+        --fg: #1f2937;
+        --mut: #8a94a6;
+        --bd: #e3e6ec;
+        --ac: #0d99ff;
+      }
+      .figma-dark {
+        --bg: #2c2c2c;
+        --fg: #fff;
+        --mut: #9aa0ab;
+        --bd: #444;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          12px Inter,
+          sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--bd);
+      }
+      .tab {
+        flex: 1;
+        padding: 12px;
+        text-align: center;
+        cursor: pointer;
+        color: var(--mut);
+        font-weight: 600;
+      }
+      .tab.on {
+        color: var(--fg);
+        box-shadow: inset 0 -2px var(--ac);
+      }
+      .pane {
+        display: none;
+        padding: 16px;
+      }
+      .pane.on {
+        display: block;
+      }
+      label.f {
+        display: block;
+        margin: 12px 0 4px;
+        color: var(--mut);
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--fg);
+        font: inherit;
+      }
+      .chk {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        margin: 4px 12px 4px 0;
+      }
+      button {
+        width: 100%;
+        margin-top: 16px;
+        padding: 10px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--ac);
+        color: #fff;
+        font:
+          600 12px Inter,
+          sans-serif;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      .chip {
+        display: inline-block;
+        padding: 3px 8px;
+        margin: 2px 4px 2px 0;
+        border: 1px solid var(--bd);
+        border-radius: 12px;
+      }
+      .hint {
+        color: var(--mut);
+        margin-top: 6px;
+        line-height: 1.4;
+      }
+      #log {
+        margin: 0 16px 16px;
+        max-height: 180px;
+        overflow: auto;
+        border: 1px solid var(--bd);
+        border-radius: 6px;
+        padding: 8px;
+      }
+      #log div {
+        padding: 2px 0;
+      }
+      .info {
+        color: var(--mut);
+      }
+      .ok {
+        color: #14ae5c;
+      }
+      .warn {
+        color: #f5a623;
+      }
+      .error {
+        color: #f24822;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tabs">
+      <div class="tab on" data-p="p1">1 · Crear sistema</div>
+      <div class="tab" data-p="p2">2 · Cambiar fuente</div>
+    </div>
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
+    <div class="pane on" id="p1">
+      <label class="f">Plataforma</label>
+      <select id="platform">
+        <option>Web</option>
+        <option>Mobile</option>
+      </select>
+      <label class="f">Grupo</label>
+      <input type="text" id="group" value="Primary" />
+      <label class="f">Familia tipográfica</label>
+      <input type="text" id="family" list="fonts" value="Inter" />
+      <label class="f">Pesos</label>
+      <label class="chk"
+        ><input
+          type="checkbox"
+          class="w"
+          value="Regular"
+          checked
+        />Regular</label
+      >
+      <label class="chk"
+        ><input type="checkbox" class="w" value="Medium" checked />Medium</label
+      >
+      <label class="chk"
+        ><input
+          type="checkbox"
+          class="w"
+          value="SemiBold"
+          checked
+        />SemiBold</label
+      >
+      <label class="chk"
+        ><input type="checkbox" class="w" value="Bold" checked />Bold</label
+      >
+      <label class="chk" style="margin-top: 12px"
+        ><input type="checkbox" id="dash" checked />Generar dashboard en el
+        lienzo</label
+      >
+      <div class="hint">
+        Crea estilos como <b>Web/Primary/Bold/H1-bold</b>. Si ya existen, se
+        actualizan (no se duplican).
+      </div>
+      <button id="create">Crear estilos</button>
+    </div>
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
+    <div class="pane" id="p2">
+      <label class="f">Fuentes usadas actualmente en los estilos</label>
+      <div id="current" class="hint">Escaneando...</div>
+      <label class="f">Nueva familia tipográfica</label>
+      <input type="text" id="target" list="fonts" placeholder="Ej: Poppins" />
+      <label class="f">Limitar a estilos que empiecen con (opcional)</label>
+      <input
+        type="text"
+        id="scope"
+        placeholder="Vacío = todos · Ej: Web/ o Mobile/Primary/"
+      />
+      <div class="hint">
+        Se cambia solo la familia: se conserva el peso, tamaño e interlineado.
+        Las capas y componentes que usan estos estilos se actualizan solos. Si
+        falta un peso, se usa el más cercano y se te avisa.
+      </div>
+      <button id="apply">Aplicar a todos los estilos</button>
+      <button
+        id="rescan"
+        style="
+          background: transparent;
+          color: var(--fg);
+          border: 1px solid var(--bd);
+          margin-top: 8px;
+        "
+      >
+        Re-escanear
+      </button>
+    </div>
 
-</script>
+    <datalist id="fonts"></datalist>
+    <div id="log"></div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const send = (m) => parent.postMessage({ pluginMessage: m }, "*");
+      const btns = ["create", "apply", "rescan"].map($);
+      const lock = (v) => btns.forEach((b) => (b.disabled = v));
+
+      function log(level, text) {
+        const d = document.createElement("div");
+        d.className = level;
+        d.textContent = text;
+        $("log").appendChild(d);
+        $("log").scrollTop = 1e9;
+      }
+
+      document.querySelectorAll(".tab").forEach(
+        (t) =>
+          (t.onclick = () => {
+            document
+              .querySelectorAll(".tab,.pane")
+              .forEach((e) => e.classList.remove("on"));
+            t.classList.add("on");
+            $(t.dataset.p).classList.add("on");
+          }),
+      );
+
+      $("create").onclick = () => {
+        const weights = Array.from(document.querySelectorAll(".w:checked")).map(
+          (c) => c.value,
+        );
+        if (!weights.length)
+          return log("error", "Selecciona al menos un peso.");
+        lock(true);
+        log("info", "Iniciando...");
+        send({
+          type: "create",
+          opts: {
+            platform: $("platform").value,
+            group: $("group").value.trim() || "Primary",
+            family: $("family").value,
+            weights,
+            dashboard: $("dash").checked,
+          },
+        });
+      };
+      $("apply").onclick = () => {
+        if (!$("target").value.trim())
+          return log("error", "Escribe la fuente de destino.");
+        lock(true);
+        log("info", "Aplicando cambio masivo...");
+        send({
+          type: "apply",
+          target: $("target").value,
+          scope: $("scope").value,
+        });
+      };
+      $("rescan").onclick = () => send({ type: "scan" });
+
+      onmessage = (e) => {
+        const m = e.data.pluginMessage;
+        if (!m) return;
+        if (m.type === "status") log(m.level, m.text);
+        if (m.type === "done") lock(false);
+        if (m.type === "scan-result") {
+          $("current").innerHTML =
+            Object.keys(m.families)
+              .map((f) => `<span class="chip"></span>`)
+              .join("") || "Sin estilos locales.";
+          Object.keys(m.families).forEach((f, i) => {
+            $("current").children[i].textContent = `${f} · ${m.families[f]}`;
+          });
+          const dl = $("fonts");
+          if (!dl.children.length)
+            m.installed.forEach((f) => {
+              const o = document.createElement("option");
+              o.value = f;
+              dl.appendChild(o);
+            });
+        }
+      };
+      send({ type: "scan" });
+    </script>
+  </body>
+</html>
