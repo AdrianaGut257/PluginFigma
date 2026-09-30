@@ -39,22 +39,15 @@ async function allFonts(): Promise<Font[]> {
 const norm = (s: string) => s.toLowerCase().replace(/[\s\-_]/g, "");
 const WEIGHT_MAP: Record<string, number> = {
   thin: 100,
-  hairline: 100,
-  extralight: 200,
-  ultralight: 200,
+  extralight: 200
   light: 300,
-  "": 400,
   regular: 400,
-  book: 400,
   normal: 400,
   medium: 500,
-  semibold: 600,
-  demibold: 600,
+  semibold: 600
   bold: 700,
   extrabold: 800,
-  ultrabold: 800,
   black: 900,
-  heavy: 900,
 };
 function parseStyle(style: string) {
   const n = norm(style);
