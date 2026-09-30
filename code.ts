@@ -31,7 +31,6 @@ const MOBILE: Tok[] = WEB.map(
   ([id, l, s, h]) => [id, l, ...(MOBILE_OVERRIDE[id] || [s, h])] as Tok,
 );
 
-// ---------- Fuentes ----------
 let fontsCache: Font[] | null = null;
 async function allFonts(): Promise<Font[]> {
   if (!fontsCache) fontsCache = await figma.listAvailableFontsAsync();
