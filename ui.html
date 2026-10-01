@@ -4,210 +4,493 @@
     <meta charset="utf-8" />
     <style>
       :root {
-        --bg: #fff;
-        --fg: #1f2937;
-        --mut: #8a94a6;
-        --bd: #e3e6ec;
-        --ac: #0d99ff;
+        --bg: #ffffff;
+        --surface: #f6f7f9;
+        --fg: #1b2230;
+        --mut: #7a8496;
+        --bd: #e4e7ed;
+        --ac: #6c47ff;
+        --ac-soft: #efebff;
+        --ac-fg: #ffffff;
+        --ok: #12a461;
+        --warn: #e39a14;
+        --err: #e5484d;
+        --shadow: 0 1px 2px rgba(20, 28, 45, 0.06);
       }
       .figma-dark {
-        --bg: #2c2c2c;
-        --fg: #fff;
+        --bg: #1e1e1e;
+        --surface: #2a2a2c;
+        --fg: #f2f3f5;
         --mut: #9aa0ab;
-        --bd: #444;
+        --bd: #3a3b3f;
+        --ac: #8f73ff;
+        --ac-soft: #302a52;
+        --ac-fg: #ffffff;
+        --shadow: none;
       }
       * {
         box-sizing: border-box;
       }
+      html,
+      body {
+        height: 100%;
+      }
       body {
         margin: 0;
+        display: flex;
+        flex-direction: column;
         font:
-          12px Inter,
+          12px/1.4 Inter,
+          system-ui,
           sans-serif;
         color: var(--fg);
         background: var(--bg);
       }
+
+      .header {
+        padding: 16px 16px 12px;
+      }
       .tabs {
         display: flex;
-        border-bottom: 1px solid var(--bd);
+        padding: 3px;
+        gap: 3px;
+        background: var(--surface);
+        border: 1px solid var(--bd);
+        border-radius: 10px;
       }
       .tab {
         flex: 1;
-        padding: 12px;
+        padding: 8px 10px;
         text-align: center;
         cursor: pointer;
         color: var(--mut);
         font-weight: 600;
+        border-radius: 7px;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        user-select: none;
+      }
+      .tab:hover {
+        color: var(--fg);
       }
       .tab.on {
+        background: var(--bg);
         color: var(--fg);
-        box-shadow: inset 0 -2px var(--ac);
+        box-shadow: var(--shadow);
+      }
+
+      .panes {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 0 16px 8px;
       }
       .pane {
         display: none;
-        padding: 16px;
       }
       .pane.on {
         display: block;
       }
-      label.f {
-        display: block;
-        margin: 12px 0 4px;
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--bd);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      .card h3 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .card .sub {
+        margin: 0 0 12px;
         color: var(--mut);
       }
+
+      label.f {
+        display: block;
+        margin: 12px 0 6px;
+        color: var(--mut);
+        font-weight: 500;
+      }
+      label.f:first-of-type {
+        margin-top: 0;
+      }
+
       input[type="text"],
       select {
         width: 100%;
-        padding: 8px;
+        height: 36px;
+        padding: 0 10px;
         border: 1px solid var(--bd);
-        border-radius: 6px;
-        background: transparent;
+        border-radius: 8px;
+        background: var(--bg);
         color: var(--fg);
         font: inherit;
+        font-size: 12px;
+        outline: none;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      select {
+        appearance: none;
+        padding-right: 28px;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%237a8496' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 11px center;
+      }
+      input[type="text"]::placeholder {
+        color: var(--mut);
+        opacity: 0.7;
+      }
+      input[type="text"]:focus,
+      select:focus {
+        border-color: var(--ac);
+        box-shadow: 0 0 0 3px var(--ac-soft);
       }
       select option {
-        color: #000;
+        background: var(--bg);
+        color: var(--fg);
       }
-      .chk {
+
+      .pills {
+        display: flex;
+        gap: 8px;
+      }
+      label.chk {
+        position: relative;
         display: inline-flex;
-        gap: 6px;
         align-items: center;
-        margin: 4px 12px 4px 0;
+        gap: 8px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .pills label.chk {
+        flex: 1;
+        justify-content: center;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        background: var(--bg);
+        font-weight: 600;
+        color: var(--mut);
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .pills label.chk:has(input:checked) {
+        background: var(--ac-soft);
+        border-color: var(--ac);
+        color: var(--ac);
+      }
+      .pills label.chk:has(input:focus-visible) {
+        box-shadow: 0 0 0 3px var(--ac-soft);
+      }
+      .pills input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .switch {
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--bd);
+      }
+      .switch input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .switch .track {
+        flex: none;
+        width: 32px;
+        height: 18px;
+        border-radius: 999px;
+        background: var(--bd);
+        position: relative;
+        transition: background 0.15s;
+      }
+      .switch .track::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: transform 0.15s;
+      }
+      .switch input:checked + .track {
+        background: var(--ac);
+      }
+      .switch input:checked + .track::after {
+        transform: translateX(14px);
+      }
+      .switch input:focus-visible + .track {
+        box-shadow: 0 0 0 3px var(--ac-soft);
+      }
+
+      .hint {
+        color: var(--mut);
+        margin-top: 10px;
+        line-height: 1.5;
+      }
+      .hint b {
+        color: var(--fg);
+        font-weight: 600;
+      }
+
+      #current {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border: 1px solid var(--bd);
+        border-radius: 999px;
+        background: var(--bg);
+        font-weight: 500;
+      }
+      .chip::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ac);
+      }
+
+      .actions {
+        padding: 12px 16px;
+        border-top: 1px solid var(--bd);
+        background: var(--bg);
+      }
+      .actions .row {
+        display: none;
+        gap: 8px;
+      }
+      .actions .row.on {
+        display: flex;
       }
       button {
-        width: 100%;
-        margin-top: 16px;
-        padding: 10px;
+        flex: 1;
+        height: 38px;
         border: 0;
-        border-radius: 6px;
+        border-radius: 9px;
         background: var(--ac);
-        color: #fff;
+        color: var(--ac-fg);
         font:
           600 12px Inter,
+          system-ui,
           sans-serif;
         cursor: pointer;
+        transition:
+          filter 0.15s,
+          transform 0.05s;
+      }
+      button:hover {
+        filter: brightness(1.08);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--ac);
+        outline-offset: 2px;
       }
       button.sec {
+        flex: 0 0 auto;
+        padding: 0 16px;
         background: transparent;
         color: var(--fg);
         border: 1px solid var(--bd);
-        margin-top: 8px;
+      }
+      button.sec:hover {
+        background: var(--surface);
+        filter: none;
       }
       button:disabled {
         opacity: 0.5;
         cursor: wait;
       }
-      .chip {
-        display: inline-block;
-        padding: 3px 8px;
-        margin: 2px 4px 2px 0;
-        border: 1px solid var(--bd);
-        border-radius: 12px;
-      }
-      .hint {
-        color: var(--mut);
-        margin-top: 6px;
-        line-height: 1.4;
-      }
+
       #log {
-        margin: 0 16px 16px;
-        max-height: 170px;
-        overflow: auto;
-        border: 1px solid var(--bd);
-        border-radius: 6px;
-        padding: 8px;
+        height: 108px;
+        overflow-y: auto;
+        padding: 8px 16px 12px;
+        background: var(--surface);
+        border-top: 1px solid var(--bd);
+        font-size: 11px;
+      }
+      #log:empty::before {
+        content: "La actividad aparecerá aquí.";
+        color: var(--mut);
       }
       #log div {
-        padding: 2px 0;
+        position: relative;
+        padding: 3px 0 3px 14px;
+      }
+      #log div::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
       }
       .info {
         color: var(--mut);
       }
       .ok {
-        color: #14ae5c;
+        color: var(--ok);
       }
       .warn {
-        color: #f5a623;
+        color: var(--warn);
       }
       .error {
-        color: #f24822;
+        color: var(--err);
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--bd);
+        border-radius: 8px;
+        border: 2px solid transparent;
+        background-clip: content-box;
       }
     </style>
   </head>
   <body>
-    <div class="tabs">
-      <div class="tab on" data-p="p1">1 · Crear sistema</div>
-      <div class="tab" data-p="p2">2 · Cambiar fuentes</div>
+    <div class="header">
+      <div class="tabs">
+        <div class="tab on" data-p="p1">Crear sistema</div>
+        <div class="tab" data-p="p2">Cambiar fuentes</div>
+      </div>
     </div>
 
-    <div class="pane on" id="p1">
-      <label class="f">Plataformas</label>
-      <label class="chk"
-        ><input type="checkbox" class="pl" value="Web" checked />Web</label
-      >
-      <label class="chk"
-        ><input
-          type="checkbox"
-          class="pl"
-          value="Mobile"
-          checked
-        />Mobile</label
-      >
-      <label class="f">Fuente primaria (Headings y Subtitle)</label>
-      <input type="text" id="c_primary" list="fonts" value="Inter" />
-      <label class="f">Fuente secundaria (Body y Caption)</label>
-      <input type="text" id="c_secondary" list="fonts" value="Inter" />
-      <label class="f">Los botones usan la fuente</label>
-      <select id="c_btn">
-        <option>Primary</option>
-        <option>Secondary</option>
-      </select>
-      <label class="chk" style="margin-top: 12px"
-        ><input type="checkbox" id="dash" checked />Generar dashboard (tabla) en
-        el lienzo</label
-      >
-      <div class="hint">
-        Crea estilos como <b>Web/Primary/H1-bold</b> y
-        <b>Mobile/Secondary/Body1-regular</b>. Si ya existen, se actualizan.
+    <div class="panes">
+      <div class="pane on" id="p1">
+        <div class="card">
+          <h3>Plataformas</h3>
+          <p class="sub">Se crea un set de estilos por cada una.</p>
+          <div class="pills">
+            <label class="chk"
+              ><input
+                type="checkbox"
+                class="pl"
+                value="Web"
+                checked
+              />Web</label
+            >
+            <label class="chk"
+              ><input
+                type="checkbox"
+                class="pl"
+                value="Mobile"
+                checked
+              />Mobile</label
+            >
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Fuentes</h3>
+          <p class="sub">Escribe el nombre tal como aparece en Figma.</p>
+          <label class="f">Primaria (Headings y Subtitle)</label>
+          <input type="text" id="c_primary" list="fonts" value="Inter" />
+          <label class="f">Secundaria (Body y Caption)</label>
+          <input type="text" id="c_secondary" list="fonts" value="Inter" />
+          <label class="f">Los botones usan la fuente</label>
+          <select id="c_btn">
+            <option>Primary</option>
+            <option>Secondary</option>
+          </select>
+          <label class="chk switch">
+            <span>Generar dashboard en el lienzo</span>
+            <input type="checkbox" id="dash" checked />
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="hint">
+          Crea estilos como <b>Web/Primary/H1-bold</b> y
+          <b>Mobile/Secondary/Body1-regular</b>. Si ya existen, se actualizan.
+        </div>
       </div>
-      <button id="create">Crear estilos</button>
+
+      <div class="pane" id="p2">
+        <div class="card">
+          <h3>Fuentes en uso</h3>
+          <p class="sub">Detectadas en tus estilos locales.</p>
+          <div id="current" class="hint">Escaneando...</div>
+        </div>
+
+        <div class="card">
+          <h3>Nuevas fuentes</h3>
+          <p class="sub">Deja vacío lo que no quieras cambiar.</p>
+          <label class="f">Primaria</label>
+          <input
+            type="text"
+            id="a_primary"
+            list="fonts"
+            placeholder="Ej: Poppins"
+          />
+          <label class="f">Secundaria</label>
+          <input
+            type="text"
+            id="a_secondary"
+            list="fonts"
+            placeholder="Ej: Inter"
+          />
+          <label class="f">Los botones usan la fuente</label>
+          <select id="a_btn">
+            <option>Primary</option>
+            <option>Secondary</option>
+          </select>
+          <label class="f">Plataforma a modificar</label>
+          <select id="a_scope">
+            <option value="">Web y Mobile</option>
+            <option>Web</option>
+            <option>Mobile</option>
+          </select>
+        </div>
+
+        <div class="hint">
+          Cambia solo la familia: se conserva peso, tamaño, interlineado y
+          letter spacing. Capas y componentes vinculados se actualizan solos, y
+          el dashboard también. Si falta un peso se usa el más cercano y se
+          avisa.
+        </div>
+      </div>
     </div>
 
-    <div class="pane" id="p2">
-      <label class="f">Fuentes usadas actualmente</label>
-      <div id="current" class="hint">Escaneando...</div>
-      <label class="f">Nueva fuente primaria (vacío = no cambiar)</label>
-      <input
-        type="text"
-        id="a_primary"
-        list="fonts"
-        placeholder="Ej: Poppins"
-      />
-      <label class="f">Nueva fuente secundaria (vacío = no cambiar)</label>
-      <input
-        type="text"
-        id="a_secondary"
-        list="fonts"
-        placeholder="Ej: Inter"
-      />
-      <label class="f">Los botones usan la fuente</label>
-      <select id="a_btn">
-        <option>Primary</option>
-        <option>Secondary</option>
-      </select>
-      <label class="f">Plataforma a modificar</label>
-      <select id="a_scope">
-        <option value="">Web y Mobile</option>
-        <option>Web</option>
-        <option>Mobile</option>
-      </select>
-      <div class="hint">
-        Cambia solo la familia: se conserva peso, tamaño, interlineado y letter
-        spacing. Capas y componentes vinculados se actualizan solos, y el
-        dashboard también. Si falta un peso se usa el más cercano y se avisa.
+    <div class="actions">
+      <div class="row on" data-for="p1">
+        <button id="create">Crear estilos</button>
       </div>
-      <button id="apply">Aplicar cambio masivo</button>
-      <button id="rescan" class="sec">Re-escanear</button>
+      <div class="row" data-for="p2">
+        <button id="rescan" class="sec">Re-escanear</button>
+        <button id="apply">Aplicar cambio masivo</button>
+      </div>
     </div>
 
     <datalist id="fonts"></datalist>
@@ -234,10 +517,13 @@
         (t) =>
           (t.onclick = () => {
             document
-              .querySelectorAll(".tab,.pane")
+              .querySelectorAll(".tab,.pane,.actions .row")
               .forEach((e) => e.classList.remove("on"));
             t.classList.add("on");
             $(t.dataset.p).classList.add("on");
+            document
+              .querySelector('.actions .row[data-for="' + t.dataset.p + '"]')
+              .classList.add("on");
           }),
       );
 

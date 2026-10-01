@@ -330,6 +330,7 @@ const COLS = [400, 240, 200, 240, 240, 280];
 function fbox(dir: "HORIZONTAL" | "VERTICAL", gap: number, width?: number) {
   const f = figma.createFrame();
   f.fills = [];
+  f.clipsContent = false;
   f.layoutMode = dir;
   f.itemSpacing = gap;
   if (width) {
@@ -367,6 +368,20 @@ async function plain(chars: string, size: number, color: RGB, wrap = false) {
     t.layoutAlign = "STRETCH";
     t.textAutoResize = "HEIGHT";
   }
+  return t;
+}
+async function gummy(chars: string, size: number, weight: string, color: RGB) {
+  const r = await resolveFont("Sour Gummy", weight);
+  const fn = r ? r.font : { family: "Inter", style: "Regular" };
+  say("info", `Sour Gummy ${weight} -> ${fn.family} ${fn.style}`);
+  await figma.loadFontAsync(fn);
+  const t = figma.createText();
+  t.fontName = fn;
+  t.fontSize = size;
+  t.lineHeight = { unit: "AUTO" };
+  t.characters = chars;
+  t.textAutoResize = "WIDTH_AND_HEIGHT";
+  t.fills = solid(color);
   return t;
 }
 function line() {
@@ -414,7 +429,12 @@ async function buildDashboard(
   root.itemSpacing = 32;
   root.fills = solid({ r: 1, g: 1, b: 1 });
 
-  const ttl = await styled(title, pick(bold, "H3"));
+  const ttl = await gummy(
+    title,
+    pick(bold, "H3").fontSize as number,
+    "Bold",
+    DARK,
+  );
   ttl.layoutAlign = "STRETCH";
   ttl.textAlignHorizontal = "CENTER";
   ttl.textAutoResize = "HEIGHT";
@@ -426,18 +446,19 @@ async function buildDashboard(
   for (const w of weights) {
     const c = fbox("VERTICAL", 4);
     c.counterAxisAlignItems = "CENTER";
-    const ref = toks.filter((k) => k.w === w)[0];
-    const aa = await styled("Aa", styles.get(`${w}|${ref.id}`) as TextStyle);
-    aa.fontSize = 64;
-    c.appendChild(aa);
-    c.appendChild(await plain(w === "SemiBold" ? "Semibold" : w, 16, GRAY));
+    c.appendChild(await gummy("Aa", 64, w, DARK));
+    c.appendChild(
+      await gummy(w === "SemiBold" ? "Semibold" : w, 16, "Regular", GRAY),
+    );
     aaRow.appendChild(c);
   }
   root.appendChild(aaRow);
 
   for (const g of ["Primary", "Secondary", "Buttons"] as Grp[]) {
     root.appendChild(line());
-    root.appendChild(await styled(g, pick(bold, "H2")));
+    root.appendChild(
+      await gummy(g, pick(bold, "H2").fontSize as number, "Bold", DARK),
+    );
     const head = fbox("HORIZONTAL", 0, CW);
     const heads = [
       "Scale",
