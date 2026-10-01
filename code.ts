@@ -1,34 +1,165 @@
-figma.showUI(__html__, { width: 400, height: 700, themeColors: true });
+figma.showUI(__html__, { width: 400, height: 720, themeColors: true });
 
 type Level = "info" | "ok" | "warn" | "error";
 const say = (level: Level, text: string) =>
   figma.ui.postMessage({ type: "status", level, text });
 
-type Tok = [string, string, number, number];
+type Grp = "Primary" | "Secondary" | "Buttons";
+interface Tok {
+  id: string;
+  label: string;
+  g: Grp;
+  w: string;
+  size: number;
+  lh: number;
+  ls: number;
+  d: string;
+}
+const T = (
+  id: string,
+  label: string,
+  g: Grp,
+  w: string,
+  size: number,
+  lh: number,
+  ls: number,
+  d: string,
+): Tok => ({ id, label, g, w, size, lh, ls, d });
+
 const WEB: Tok[] = [
-  ["H1", "Heading1", 64, 80],
-  ["H2", "Heading2", 48, 60],
-  ["H3", "Heading3", 32, 48],
-  ["H4", "Heading4", 24, 36],
-  ["H5", "Heading5", 20, 30],
-  ["H6", "Heading6", 18, 28],
-  ["subtitle1", "subtitle1", 16, 24],
-  ["subtitle2", "subtitle2", 14, 22],
-  ["body1", "body1", 16, 24],
-  ["body2", "body2", 14, 22],
-  ["capt", "Caption", 12, 18],
-  ["button", "button", 16, 24],
+  T(
+    "H1",
+    "Heading1",
+    "Primary",
+    "Bold",
+    64,
+    72,
+    -0.5,
+    "Títulos principales de la pantalla",
+  ),
+  T(
+    "H2",
+    "Heading2",
+    "Primary",
+    "Bold",
+    48,
+    56,
+    0,
+    "Títulos de secciones principales",
+  ),
+  T(
+    "H3",
+    "Heading3",
+    "Primary",
+    "Bold",
+    36,
+    44,
+    0,
+    "Títulos de secciones secundarias",
+  ),
+  T(
+    "H4",
+    "Heading4",
+    "Primary",
+    "SemiBold",
+    28,
+    36,
+    0,
+    "Encabezados pequeños o elementos destacados",
+  ),
+  T(
+    "Subtitle1",
+    "Subtitle1",
+    "Primary",
+    "SemiBold",
+    18,
+    26,
+    0,
+    "Subtítulos y textos de apoyo destacados",
+  ),
+  T(
+    "Body1",
+    "Body1",
+    "Secondary",
+    "Regular",
+    20,
+    28,
+    -1,
+    "Texto principal y contenido informativo",
+  ),
+  T(
+    "Body2",
+    "Body2",
+    "Secondary",
+    "Regular",
+    16,
+    24,
+    0,
+    "Texto secundario y descripciones",
+  ),
+  T(
+    "Body3",
+    "Body3",
+    "Secondary",
+    "Medium",
+    14,
+    18,
+    0,
+    "Texto auxiliar y elementos de interfaz pequeños",
+  ),
+  T(
+    "Caption1",
+    "Caption 1",
+    "Secondary",
+    "SemiBold",
+    12,
+    16,
+    -0.3,
+    "Información secundaria, etiquetas o metadatos destacados",
+  ),
+  T(
+    "Caption2",
+    "Caption 2",
+    "Secondary",
+    "Regular",
+    12,
+    16,
+    -0.3,
+    "Información auxiliar de menor prioridad",
+  ),
+  T(
+    "Button1",
+    "Button 1",
+    "Buttons",
+    "SemiBold",
+    16,
+    24,
+    -0.3,
+    "Acciones principales y botones destacados",
+  ),
+  T(
+    "Button2",
+    "Button 2",
+    "Buttons",
+    "SemiBold",
+    14,
+    20,
+    -0.3,
+    "Acciones secundarias o botones pequeños",
+  ),
 ];
-const MOBILE_OVERRIDE: Record<string, [number, number]> = {
-  H1: [40, 48],
-  H2: [32, 40],
-  H3: [28, 36],
-  H4: [24, 32],
-  H5: [20, 28],
-  H6: [18, 26],
+const MOB: Record<string, [number, number]> = {
+  H1: [36, 38],
+  H2: [24, 30],
+  H3: [20, 26],
+  H4: [18, 20],
+  Subtitle1: [16, 20],
+  Body1: [18, 24],
+  Body2: [16, 21],
+  Button2: [14, 16],
 };
-const MOBILE: Tok[] = WEB.map(
-  ([id, l, s, h]) => [id, l, ...(MOBILE_OVERRIDE[id] || [s, h])] as Tok,
+const MOBILE: Tok[] = WEB.map((t) =>
+  MOB[t.id] ? { ...t, size: MOB[t.id][0], lh: MOB[t.id][1] } : t,
 );
 
 let fontsCache: Font[] | null = null;
@@ -37,22 +168,30 @@ async function allFonts(): Promise<Font[]> {
   return fontsCache;
 }
 const norm = (s: string) => s.toLowerCase().replace(/[\s\-_]/g, "");
-const WEIGHT_MAP: Record<string, number> = {
+const WMAP: Record<string, number> = {
   thin: 100,
+  hairline: 100,
   extralight: 200,
+  ultralight: 200,
   light: 300,
+  "": 400,
+  regular: 400,
+  book: 400,
   normal: 400,
   medium: 500,
   semibold: 600,
+  demibold: 600,
   bold: 700,
   extrabold: 800,
+  ultrabold: 800,
   black: 900,
+  heavy: 900,
 };
 function parseStyle(style: string) {
   const n = norm(style);
   const italic = /italic|oblique/.test(n);
   const base = n.replace(/italic|oblique/g, "");
-  return { w: WEIGHT_MAP[base] !== undefined ? WEIGHT_MAP[base] : 400, italic };
+  return { w: WMAP[base] !== undefined ? WMAP[base] : 400, italic };
 }
 
 async function resolveFont(family: string, styleName: string) {
@@ -77,80 +216,135 @@ async function resolveFont(family: string, styleName: string) {
   }
   return null;
 }
+const saveCfg = (c: object) =>
+  figma.root.setPluginData("typoCfg", JSON.stringify(c));
+const loadCfg = () => {
+  try {
+    return JSON.parse(figma.root.getPluginData("typoCfg") || "{}");
+  } catch (e) {
+    return {};
+  }
+};
 
 interface CreateOpts {
-  platform: "Web" | "Mobile";
-  group: string;
-  family: string;
-  weights: string[];
+  platforms: ("Web" | "Mobile")[];
+  primary: string;
+  secondary: string;
+  buttonsUse: "Primary" | "Secondary";
   dashboard: boolean;
 }
-
-async function createSystem(o: CreateOpts) {
-  let family = o.family.trim() || "Inter";
-  if (!(await resolveFont(family, "Regular"))) {
+async function safeFamily(f: string, label: string) {
+  let fam = f.trim() || "Inter";
+  if (!(await resolveFont(fam, "Regular"))) {
     say(
       "warn",
-      `La fuente "${family}" no está instalada. Uso "Inter" como alternativa.`,
+      `Fuente ${label} "${fam}" no instalada. Uso "Inter" como alternativa.`,
     );
-    family = "Inter";
+    fam = "Inter";
   }
-  const toks = o.platform === "Mobile" ? MOBILE : WEB;
+  return fam;
+}
+async function createSystem(o: CreateOpts) {
+  if (!o.platforms.length) {
+    say("error", "Elige al menos una plataforma.");
+    return;
+  }
+  const pf = await safeFamily(o.primary, "primaria");
+  const sf = await safeFamily(o.secondary, "secundaria");
+  const fam: Record<Grp, string> = {
+    Primary: pf,
+    Secondary: sf,
+    Buttons: o.buttonsUse === "Secondary" ? sf : pf,
+  };
+  saveCfg({ primary: pf, secondary: sf, buttonsUse: o.buttonsUse });
+
   const existing = new Map(
     (await figma.getLocalTextStylesAsync()).map(
       (s) => [s.name, s] as [string, TextStyle],
     ),
   );
-  const styles = new Map<string, TextStyle>();
+  const cache = new Map<string, Awaited<ReturnType<typeof resolveFont>>>();
+  const frames: FrameNode[] = [];
   let created = 0,
-    updated = 0;
+    updated = 0,
+    nextX: number | null = null;
 
-  for (const w of o.weights) {
-    const r = await resolveFont(family, w);
-    if (!r) {
-      say("error", `No pude cargar ningún peso de "${family}". Omito ${w}.`);
-      continue;
-    }
-    if (!r.exact)
-      say("warn", `"${family}" no tiene ${w}; uso "${r.font.style}".`);
-    say("info", `Creando estilos ${w}...`);
-    for (const [id, , size, lh] of toks) {
-      const name = `${o.platform}/${o.group}/${w}/${id}-${w.toLowerCase()}`;
-      let s = existing.get(name);
-      if (s) updated++;
-      else {
-        s = figma.createTextStyle();
-        created++;
+  for (const platform of o.platforms) {
+    const toks = platform === "Mobile" ? MOBILE : WEB;
+    const styles = new Map<string, TextStyle>();
+    say("info", `Creando estilos ${platform}...`);
+    {
+      for (const t of toks) {
+        const w = t.w;
+        const key = `${fam[t.g]}|${w}`;
+        if (!cache.has(key)) {
+          const r = await resolveFont(fam[t.g], w);
+          if (r && !r.exact)
+            say("warn", `"${fam[t.g]}" no tiene ${w}; uso "${r.font.style}".`);
+          if (!r)
+            say(
+              "error",
+              `No pude cargar "${fam[t.g]}" ${w}. Omito esos estilos.`,
+            );
+          cache.set(key, r);
+        }
+        const r = cache.get(key);
+        if (!r) continue;
+        const name = `${platform}/${t.g}/${t.id}-${w.toLowerCase()}`;
+        let s = existing.get(name);
+        if (s) updated++;
+        else {
+          s = figma.createTextStyle();
+          created++;
+          existing.set(name, s);
+        }
+        s.name = name;
+        s.fontName = r.font;
+        s.fontSize = t.size;
+        s.lineHeight = { unit: "PIXELS", value: t.lh };
+        s.letterSpacing = { unit: "PIXELS", value: t.ls };
+        styles.set(`${w}|${t.id}`, s);
       }
-      s.name = name;
-      s.fontName = r.font;
-      s.fontSize = size;
-      s.lineHeight = { unit: "PIXELS", value: lh };
-      styles.set(`${w}|${id}`, s);
+    }
+    if (o.dashboard && styles.size) {
+      say("info", `Generando dashboard ${platform}...`);
+      const f = await buildDashboard(platform, toks, styles, nextX);
+      nextX = f.x + f.width + 200;
+      frames.push(f);
     }
   }
   say("ok", `Estilos: ${created} creados, ${updated} actualizados.`);
-  if (o.dashboard && styles.size) {
-    say("info", "Generando dashboard...");
-    await buildDashboard(o, toks, styles);
-    say("ok", "Dashboard generado en el lienzo.");
+  if (frames.length) {
+    figma.viewport.scrollAndZoomIntoView(frames);
+    say("ok", "Dashboard(s) generado(s).");
   }
+  await scan();
 }
 
 const DARK: RGB = { r: 0.12, g: 0.16, b: 0.21 };
-const GRAY: RGB = { r: 0.55, g: 0.58, b: 0.65 };
+const GRAY: RGB = { r: 0.55, g: 0.6, b: 0.68 };
 const solid = (c: RGB): Paint[] => [{ type: "SOLID", color: c }];
+const CW = 1600;
+const COLS = [400, 240, 200, 240, 240, 280];
 
-function box(dir: "HORIZONTAL" | "VERTICAL", gap: number, width?: number) {
+function fbox(dir: "HORIZONTAL" | "VERTICAL", gap: number, width?: number) {
   const f = figma.createFrame();
   f.fills = [];
   f.layoutMode = dir;
   f.itemSpacing = gap;
   if (width) {
     f.resize(width, 10);
+    if (dir === "HORIZONTAL") {
+      f.primaryAxisSizingMode = "FIXED";
+      f.counterAxisSizingMode = "AUTO";
+    } else {
+      f.primaryAxisSizingMode = "AUTO";
+      f.counterAxisSizingMode = "FIXED";
+    }
+  } else {
+    f.primaryAxisSizingMode = "AUTO";
+    f.counterAxisSizingMode = "AUTO";
   }
-  f.primaryAxisSizingMode = "AUTO";
-  if (!width) f.counterAxisSizingMode = "AUTO";
   return f;
 }
 async function styled(chars: string, style: TextStyle) {
@@ -161,7 +355,7 @@ async function styled(chars: string, style: TextStyle) {
   t.fills = solid(DARK);
   return t;
 }
-async function plain(chars: string, size: number, color: RGB = GRAY) {
+async function plain(chars: string, size: number, color: RGB, wrap = false) {
   const fn = { family: "Inter", style: "Regular" };
   await figma.loadFontAsync(fn);
   const t = figma.createText();
@@ -169,135 +363,202 @@ async function plain(chars: string, size: number, color: RGB = GRAY) {
   t.fontSize = size;
   t.characters = chars;
   t.fills = solid(color);
+  if (wrap) {
+    t.layoutAlign = "STRETCH";
+    t.textAutoResize = "HEIGHT";
+  }
   return t;
+}
+function line() {
+  const r = figma.createRectangle();
+  r.resize(CW, 1);
+  r.fills = solid(DARK);
+  r.layoutAlign = "STRETCH";
+  return r;
 }
 
 async function buildDashboard(
-  o: CreateOpts,
+  platform: string,
   toks: Tok[],
   styles: Map<string, TextStyle>,
+  x: number | null,
 ) {
-  const title = `${o.platform.toUpperCase()}/TYPOGRAPHY`;
+  const weights = ["Regular", "Medium", "SemiBold", "Bold"];
+  const title = `${platform.toUpperCase()}/TYPOGRAPHY`;
   const old = figma.currentPage.findChild(
     (n) => n.type === "FRAME" && n.name === title,
   );
   const pos = old
     ? { x: old.x, y: old.y }
-    : { x: figma.viewport.center.x, y: figma.viewport.center.y };
+    : {
+        x: x !== null ? x : figma.viewport.center.x,
+        y: figma.viewport.center.y,
+      };
   if (old) old.remove();
 
-  const any = Array.from(styles.values())[0];
-  const pick = (w: string, id: string) => styles.get(`${w}|${id}`) || any;
-  const boldest = o.weights[o.weights.length - 1];
-  const W = 340;
+  const pick = (w: string, id: string) =>
+    styles.get(`${w}|${id}`) ||
+    (weights
+      .map((k) => styles.get(`${k}|${id}`))
+      .filter(Boolean)[0] as TextStyle);
+  const bold =
+    weights.indexOf("Bold") >= 0 ? "Bold" : weights[weights.length - 1];
 
   const root = figma.createFrame();
   root.name = title;
   root.layoutMode = "VERTICAL";
-  root.resize(1600, 100);
+  root.resize(CW + 200, 100);
   root.primaryAxisSizingMode = "AUTO";
   root.paddingLeft = root.paddingRight = 100;
   root.paddingTop = root.paddingBottom = 80;
-  root.itemSpacing = 48;
+  root.itemSpacing = 32;
   root.fills = solid({ r: 1, g: 1, b: 1 });
 
-  root.appendChild(await styled(title, pick(boldest, "H3")));
+  const ttl = await styled(title, pick(bold, "H3"));
+  ttl.layoutAlign = "STRETCH";
+  ttl.textAlignHorizontal = "CENTER";
+  ttl.textAutoResize = "HEIGHT";
+  root.appendChild(ttl);
 
-  // Alfabeto + "Aa"
-  const top = box("HORIZONTAL", 48);
-  const alpha = box("VERTICAL", 8);
-  alpha.appendChild(await plain("Alphabet", 20, { r: 0, g: 0.68, b: 0.3 }));
-  alpha.appendChild(
-    await plain(
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n1234567890",
-      14,
-      DARK,
-    ),
-  );
-  top.appendChild(alpha);
-  for (const w of o.weights) {
-    const c = box("VERTICAL", 4);
-    c.appendChild(await styled("Aa", pick(w, "H1")));
-    c.appendChild(await plain(w, 12));
-    top.appendChild(c);
+  // "Aa" por peso, alineado a la derecha
+  const aaRow = fbox("HORIZONTAL", 32, CW);
+  aaRow.primaryAxisAlignItems = "MAX";
+  for (const w of weights) {
+    const c = fbox("VERTICAL", 4);
+    c.counterAxisAlignItems = "CENTER";
+    const ref = toks.filter((k) => k.w === w)[0];
+    const aa = await styled("Aa", styles.get(`${w}|${ref.id}`) as TextStyle);
+    aa.fontSize = 64;
+    c.appendChild(aa);
+    c.appendChild(await plain(w === "SemiBold" ? "Semibold" : w, 16, GRAY));
+    aaRow.appendChild(c);
   }
-  root.appendChild(top);
+  root.appendChild(aaRow);
 
-  const specs = (size: number) =>
-    `${size}px / ${o.weights.map((w) => w.toLowerCase()).join(" / ")}`;
-  async function section(name: string, list: Tok[]) {
-    root.appendChild(await styled(name, pick(boldest, "H2")));
-    for (const [id, label, size] of list) {
-      const row = box("HORIZONTAL", 24);
-      for (let i = 0; i < o.weights.length; i++) {
-        const cell = box("VERTICAL", 8, W);
-        cell.appendChild(await styled(label, pick(o.weights[i], id)));
-        if (i === 0) cell.appendChild(await plain(specs(size), 12));
-        row.appendChild(cell);
+  for (const g of ["Primary", "Secondary", "Buttons"] as Grp[]) {
+    root.appendChild(line());
+    root.appendChild(await styled(g, pick(bold, "H2")));
+    const head = fbox("HORIZONTAL", 0, CW);
+    const heads = [
+      "Scale",
+      "Weight",
+      "Size",
+      "Line-Height",
+      "Letter spacing",
+      "Description",
+    ];
+    for (let i = 0; i < heads.length; i++) {
+      const c = fbox("VERTICAL", 0, COLS[i]);
+      c.appendChild(await plain(heads[i], 20, GRAY));
+      head.appendChild(c);
+    }
+    root.appendChild(head);
+    for (const t of toks.filter((k) => k.g === g)) {
+      const row = fbox("HORIZONTAL", 0, CW);
+      row.counterAxisAlignItems = "CENTER";
+      row.paddingTop = row.paddingBottom = 12;
+      const vals: (string | null)[] = [
+        null,
+        t.w === "SemiBold" ? "Semibold" : t.w,
+        `${t.size}px`,
+        `${t.lh}px`,
+        `${t.ls}px`,
+        t.d,
+      ];
+      for (let i = 0; i < vals.length; i++) {
+        const c = fbox("VERTICAL", 0, COLS[i]);
+        c.appendChild(
+          vals[i] === null
+            ? await styled(t.label, pick(t.w, t.id))
+            : await plain(vals[i] as string, 18, DARK, i === 5),
+        );
+        row.appendChild(c);
       }
       root.appendChild(row);
     }
   }
-  await section(
-    "Container",
-    toks.filter((t) => t[0] !== "button"),
-  );
-  await section(
-    "Buttons",
-    toks.filter((t) => t[0] === "button"),
-  );
-
   root.x = pos.x;
   root.y = pos.y;
   figma.currentPage.appendChild(root);
-  figma.viewport.scrollAndZoomIntoView([root]);
+  return root;
 }
 
-// ---------- MODO 2: cambio masivo ----------
 async function scan() {
   const styles = await figma.getLocalTextStylesAsync();
-  const families: Record<string, number> = {};
+  const byGroup: Record<string, string[]> = {};
   styles.forEach((s) => {
-    families[s.fontName.family] = (families[s.fontName.family] || 0) + 1;
+    const g = s.name.split("/")[1] || "(sin grupo)";
+    byGroup[g] = byGroup[g] || [];
+    if (byGroup[g].indexOf(s.fontName.family) < 0)
+      byGroup[g].push(s.fontName.family);
   });
   const installed = Array.from(
     new Set((await allFonts()).map((f) => f.fontName.family)),
   ).sort();
   figma.ui.postMessage({
     type: "scan-result",
-    families,
+    byGroup,
     installed,
     total: styles.length,
+    saved: loadCfg(),
   });
 }
 
-async function applyFont(target: string, scope: string) {
-  target = target.trim();
-  if (!target) {
-    say("error", "Escribe la fuente de destino.");
+interface ApplyOpts {
+  primary: string;
+  secondary: string;
+  buttonsUse: "Primary" | "Secondary";
+  scope: string;
+}
+async function applyFonts(o: ApplyOpts) {
+  const primary = o.primary.trim(),
+    secondary = o.secondary.trim();
+  if (!primary && !secondary) {
+    say("error", "Escribe al menos una fuente (primaria o secundaria).");
     return;
   }
-  if (!(await resolveFont(target, "Regular"))) {
-    say(
-      "error",
-      `"${target}" no está instalada o no existe. No se modificó ningún estilo.`,
-    );
-    return;
+  for (const [label, f] of [
+    ["primaria", primary],
+    ["secundaria", secondary],
+  ]) {
+    if (f && !(await resolveFont(f, "Regular"))) {
+      say(
+        "error",
+        `La fuente ${label} "${f}" no está instalada o no existe. No se modificó ningún estilo.`,
+      );
+      return;
+    }
   }
+  const targetFor = (g: string) =>
+    g === "Primary"
+      ? primary
+      : g === "Secondary"
+        ? secondary
+        : g === "Buttons"
+          ? o.buttonsUse === "Secondary"
+            ? secondary
+            : primary
+          : "";
   const styles = (await figma.getLocalTextStylesAsync()).filter(
-    (s) => !scope || s.name.startsWith(scope),
+    (s) => !o.scope || s.name.startsWith(o.scope + "/"),
   );
   if (!styles.length) {
-    say("warn", "No hay estilos que coincidan con el filtro.");
+    say("warn", "No hay estilos que coincidan.");
     return;
   }
 
   let ok = 0,
     same = 0,
     fb = 0,
-    fail = 0;
+    fail = 0,
+    skipped = 0;
   for (let i = 0; i < styles.length; i++) {
     const s = styles[i];
+    const target = targetFor(s.name.split("/")[1] || "");
+    if (!target) {
+      skipped++;
+      continue;
+    }
     try {
       const r = await resolveFont(target, s.fontName.style);
       if (!r) {
@@ -327,9 +588,15 @@ async function applyFont(target: string, scope: string) {
     }
     if (i % 10 === 0) say("info", `Procesando ${i + 1}/${styles.length}...`);
   }
+  const cfg = loadCfg();
+  saveCfg({
+    primary: primary || cfg.primary,
+    secondary: secondary || cfg.secondary,
+    buttonsUse: o.buttonsUse,
+  });
   say(
     fail ? "warn" : "ok",
-    `Listo: ${ok} actualizados, ${same} ya estaban, ${fb} con peso alternativo, ${fail} con error.`,
+    `Listo: ${ok} actualizados, ${same} ya estaban, ${fb} con peso alternativo, ${skipped} sin tocar, ${fail} con error.`,
   );
   await scan();
 }
@@ -338,7 +605,7 @@ figma.ui.onmessage = async (msg: any) => {
   try {
     if (msg.type === "scan") await scan();
     else if (msg.type === "create") await createSystem(msg.opts);
-    else if (msg.type === "apply") await applyFont(msg.target, msg.scope || "");
+    else if (msg.type === "apply") await applyFonts(msg.opts);
   } catch (e) {
     say("error", `Error inesperado: ${(e as Error).message}`);
   } finally {

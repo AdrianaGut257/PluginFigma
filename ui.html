@@ -1,4 +1,3 @@
-Ui · HTML
 <!doctype html>
 <html>
   <head>
@@ -66,6 +65,9 @@ Ui · HTML
         color: var(--fg);
         font: inherit;
       }
+      select option {
+        color: #000;
+      }
       .chk {
         display: inline-flex;
         gap: 6px;
@@ -85,6 +87,12 @@ Ui · HTML
           sans-serif;
         cursor: pointer;
       }
+      button.sec {
+        background: transparent;
+        color: var(--fg);
+        border: 1px solid var(--bd);
+        margin-top: 8px;
+      }
       button:disabled {
         opacity: 0.5;
         cursor: wait;
@@ -103,7 +111,7 @@ Ui · HTML
       }
       #log {
         margin: 0 16px 16px;
-        max-height: 180px;
+        max-height: 170px;
         overflow: auto;
         border: 1px solid var(--bd);
         border-radius: 6px;
@@ -129,81 +137,77 @@ Ui · HTML
   <body>
     <div class="tabs">
       <div class="tab on" data-p="p1">1 · Crear sistema</div>
-      <div class="tab" data-p="p2">2 · Cambiar fuente</div>
+      <div class="tab" data-p="p2">2 · Cambiar fuentes</div>
     </div>
 
     <div class="pane on" id="p1">
-      <label class="f">Plataforma</label>
-      <select id="platform">
-        <option>Web</option>
-        <option>Mobile</option>
+      <label class="f">Plataformas</label>
+      <label class="chk"
+        ><input type="checkbox" class="pl" value="Web" checked />Web</label
+      >
+      <label class="chk"
+        ><input
+          type="checkbox"
+          class="pl"
+          value="Mobile"
+          checked
+        />Mobile</label
+      >
+      <label class="f">Fuente primaria (Headings y Subtitle)</label>
+      <input type="text" id="c_primary" list="fonts" value="Inter" />
+      <label class="f">Fuente secundaria (Body y Caption)</label>
+      <input type="text" id="c_secondary" list="fonts" value="Inter" />
+      <label class="f">Los botones usan la fuente</label>
+      <select id="c_btn">
+        <option>Primary</option>
+        <option>Secondary</option>
       </select>
-      <label class="f">Grupo</label>
-      <input type="text" id="group" value="Primary" />
-      <label class="f">Familia tipográfica</label>
-      <input type="text" id="family" list="fonts" value="Inter" />
-      <label class="f">Pesos</label>
-      <label class="chk"
-        ><input
-          type="checkbox"
-          class="w"
-          value="Regular"
-          checked
-        />Regular</label
-      >
-      <label class="chk"
-        ><input type="checkbox" class="w" value="Medium" checked />Medium</label
-      >
-      <label class="chk"
-        ><input
-          type="checkbox"
-          class="w"
-          value="SemiBold"
-          checked
-        />SemiBold</label
-      >
-      <label class="chk"
-        ><input type="checkbox" class="w" value="Bold" checked />Bold</label
-      >
       <label class="chk" style="margin-top: 12px"
-        ><input type="checkbox" id="dash" checked />Generar dashboard en el
-        lienzo</label
+        ><input type="checkbox" id="dash" checked />Generar dashboard (tabla) en
+        el lienzo</label
       >
       <div class="hint">
-        Crea estilos como <b>Web/Primary/Bold/H1-bold</b>. Si ya existen, se
-        actualizan (no se duplican).
+        Crea estilos como <b>Web/Primary/H1-bold</b> y
+        <b>Mobile/Secondary/Body1-regular</b>. Si ya existen, se actualizan.
       </div>
       <button id="create">Crear estilos</button>
     </div>
 
     <div class="pane" id="p2">
-      <label class="f">Fuentes usadas actualmente en los estilos</label>
+      <label class="f">Fuentes usadas actualmente</label>
       <div id="current" class="hint">Escaneando...</div>
-      <label class="f">Nueva familia tipográfica</label>
-      <input type="text" id="target" list="fonts" placeholder="Ej: Poppins" />
-      <label class="f">Limitar a estilos que empiecen con (opcional)</label>
+      <label class="f">Nueva fuente primaria (vacío = no cambiar)</label>
       <input
         type="text"
-        id="scope"
-        placeholder="Vacío = todos · Ej: Web/ o Mobile/Primary/"
+        id="a_primary"
+        list="fonts"
+        placeholder="Ej: Poppins"
       />
+      <label class="f">Nueva fuente secundaria (vacío = no cambiar)</label>
+      <input
+        type="text"
+        id="a_secondary"
+        list="fonts"
+        placeholder="Ej: Inter"
+      />
+      <label class="f">Los botones usan la fuente</label>
+      <select id="a_btn">
+        <option>Primary</option>
+        <option>Secondary</option>
+      </select>
+      <label class="f">Plataforma a modificar</label>
+      <select id="a_scope">
+        <option value="">Web y Mobile</option>
+        <option>Web</option>
+        <option>Mobile</option>
+      </select>
       <div class="hint">
-        Se cambia solo la familia: se conserva el peso, tamaño e interlineado.
-        Las capas y componentes que usan estos estilos se actualizan solos. Si
-        falta un peso, se usa el más cercano y se te avisa.
+        Cambia solo la familia: se conserva peso, tamaño, interlineado y letter
+        spacing. Capas y componentes vinculados se actualizan solos, y el
+        dashboard también. Si falta un peso se usa el más cercano y se avisa.
       </div>
-      <button id="apply">Aplicar a todos los estilos</button>
-      <button
-        id="rescan"
-        style="
-          background: transparent;
-          color: var(--fg);
-          border: 1px solid var(--bd);
-          margin-top: 8px;
-        "
-      >
-        Re-escanear
-      </button>
+      <button id="apply">Aplicar cambio masivo</button>
+      <button id="rescan" class="sec">Re-escanear</button>
     </div>
 
     <datalist id="fonts"></datalist>
@@ -214,6 +218,10 @@ Ui · HTML
       const send = (m) => parent.postMessage({ pluginMessage: m }, "*");
       const btns = ["create", "apply", "rescan"].map($);
       const lock = (v) => btns.forEach((b) => (b.disabled = v));
+      const checked = (sel) =>
+        Array.from(document.querySelectorAll(sel + ":checked")).map(
+          (c) => c.value,
+        );
 
       function log(level, text) {
         const d = document.createElement("div");
@@ -222,7 +230,6 @@ Ui · HTML
         $("log").appendChild(d);
         $("log").scrollTop = 1e9;
       }
-
       document.querySelectorAll(".tab").forEach(
         (t) =>
           (t.onclick = () => {
@@ -235,49 +242,55 @@ Ui · HTML
       );
 
       $("create").onclick = () => {
-        const weights = Array.from(document.querySelectorAll(".w:checked")).map(
-          (c) => c.value,
-        );
-        if (!weights.length)
-          return log("error", "Selecciona al menos un peso.");
+        const platforms = checked(".pl");
+        if (!platforms.length)
+          return log("error", "Elige al menos una plataforma.");
         lock(true);
         log("info", "Iniciando...");
         send({
           type: "create",
           opts: {
-            platform: $("platform").value,
-            group: $("group").value.trim() || "Primary",
-            family: $("family").value,
-            weights,
+            platforms,
+            primary: $("c_primary").value,
+            secondary: $("c_secondary").value,
+            buttonsUse: $("c_btn").value,
             dashboard: $("dash").checked,
           },
         });
       };
       $("apply").onclick = () => {
-        if (!$("target").value.trim())
-          return log("error", "Escribe la fuente de destino.");
+        if (!$("a_primary").value.trim() && !$("a_secondary").value.trim())
+          return log("error", "Escribe al menos una fuente.");
         lock(true);
         log("info", "Aplicando cambio masivo...");
         send({
           type: "apply",
-          target: $("target").value,
-          scope: $("scope").value,
+          opts: {
+            primary: $("a_primary").value,
+            secondary: $("a_secondary").value,
+            buttonsUse: $("a_btn").value,
+            scope: $("a_scope").value,
+          },
         });
       };
       $("rescan").onclick = () => send({ type: "scan" });
 
+      let first = true;
       onmessage = (e) => {
         const m = e.data.pluginMessage;
         if (!m) return;
         if (m.type === "status") log(m.level, m.text);
         if (m.type === "done") lock(false);
         if (m.type === "scan-result") {
-          $("current").innerHTML =
-            Object.keys(m.families)
-              .map((f) => `<span class="chip"></span>`)
-              .join("") || "Sin estilos locales.";
-          Object.keys(m.families).forEach((f, i) => {
-            $("current").children[i].textContent = `${f} · ${m.families[f]}`;
+          const cur = $("current");
+          cur.innerHTML = "";
+          const groups = Object.keys(m.byGroup);
+          if (!groups.length) cur.textContent = "Sin estilos locales.";
+          groups.forEach((g) => {
+            const s = document.createElement("span");
+            s.className = "chip";
+            s.textContent = `${g}: ${m.byGroup[g].join(", ")}`;
+            cur.appendChild(s);
           });
           const dl = $("fonts");
           if (!dl.children.length)
@@ -286,6 +299,19 @@ Ui · HTML
               o.value = f;
               dl.appendChild(o);
             });
+          if (first && m.saved) {
+            first = false;
+            if (m.saved.primary) {
+              $("c_primary").value = m.saved.primary;
+            }
+            if (m.saved.secondary) {
+              $("c_secondary").value = m.saved.secondary;
+            }
+            if (m.saved.buttonsUse) {
+              $("c_btn").value = m.saved.buttonsUse;
+              $("a_btn").value = m.saved.buttonsUse;
+            }
+          }
         }
       };
       send({ type: "scan" });
