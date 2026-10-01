@@ -27,6 +27,7 @@
         --ac-soft: #302a52;
         --ac-fg: #ffffff;
         --shadow: none;
+        color-scheme: dark;
       }
       * {
         box-sizing: border-box;
@@ -368,6 +369,35 @@
         color: var(--err);
       }
 
+      .colors {
+        display: flex;
+        gap: 8px;
+      }
+      .colors > div {
+        flex: 1;
+      }
+      input[type="color"] {
+        width: 100%;
+        height: 36px;
+        padding: 3px;
+        border: 1px solid var(--bd);
+        border-radius: 8px;
+        background: var(--bg);
+        cursor: pointer;
+      }
+
+      .hexrow {
+        display: flex;
+        gap: 8px;
+      }
+      .hexrow input[type="color"] {
+        width: 48px;
+        flex: none;
+      }
+      .hexrow input[type="text"] {
+        flex: 1;
+      }
+
       ::-webkit-scrollbar {
         width: 8px;
       }
@@ -382,8 +412,10 @@
   <body>
     <div class="header">
       <div class="tabs">
-        <div class="tab on" data-p="p1">Crear sistema</div>
-        <div class="tab" data-p="p2">Cambiar fuentes</div>
+        <div class="tab on" data-p="p1">Tipografía</div>
+        <div class="tab" data-p="p2">Fuentes</div>
+        <div class="tab" data-p="p3">Botones</div>
+        <div class="tab" data-p="p4">Colores</div>
       </div>
     </div>
 
@@ -481,6 +513,93 @@
           avisa.
         </div>
       </div>
+
+      <div class="pane" id="p3">
+        <div class="card">
+          <h3>Plataformas</h3>
+          <p class="sub">Se crea un set de botones por cada una.</p>
+          <div class="pills">
+            <label class="chk"
+              ><input
+                type="checkbox"
+                class="bpl"
+                value="Web"
+                checked
+              />Web</label
+            >
+            <label class="chk"
+              ><input
+                type="checkbox"
+                class="bpl"
+                value="Mobile"
+                checked
+              />Mobile</label
+            >
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Colores</h3>
+          <p class="sub">Hover, Pressed y Disabled se calculan solos.</p>
+          <div class="colors">
+            <div>
+              <label class="f">Primary</label>
+              <input type="color" id="b_primary" value="#5291e8" />
+            </div>
+            <div>
+              <label class="f">Secondary</label>
+              <input type="color" id="b_secondary" value="#00c158" />
+            </div>
+          </div>
+          <label class="f" style="margin-top: 12px">Texto del botón</label>
+          <input
+            type="text"
+            id="b_label"
+            placeholder="Vacío = nombre del estado"
+          />
+          <label class="chk switch">
+            <span>Conectar prototype (hover y pressed)</span>
+            <input type="checkbox" id="b_proto" checked />
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="hint">
+          Crea <b>Web/Buttons</b> y <b>Mobile/Buttons</b> con 96 variantes cada
+          uno. Usa los estilos <b>Buttons/Button1</b> del sistema tipográfico.
+          Si ya existe, se reemplaza.
+        </div>
+      </div>
+
+      <div class="pane" id="p4">
+        <div class="card">
+          <h3>Colores base</h3>
+          <p class="sub">
+            Se generan 8 tonos por color, de Clear a Dark, con sus estados.
+          </p>
+          <label class="f">Primary</label>
+          <div class="hexrow">
+            <input type="color" id="k_primary" value="#e8a77b" />
+            <input type="text" id="k_primary_hex" value="#e8a77b" />
+          </div>
+          <label class="f">Secondary</label>
+          <div class="hexrow">
+            <input type="color" id="k_secondary" value="#9caf88" />
+            <input type="text" id="k_secondary_hex" value="#9caf88" />
+          </div>
+          <label class="chk switch">
+            <span>Generar tablero en el lienzo</span>
+            <input type="checkbox" id="k_dash" checked />
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="hint">
+          Crea estilos como <b>Primary/Normal</b> y
+          <b>Secondary/Light :hover</b>. Si ya existen, se actualizan y todo lo
+          vinculado cambia solo.
+        </div>
+      </div>
     </div>
 
     <div class="actions">
@@ -491,6 +610,12 @@
         <button id="rescan" class="sec">Re-escanear</button>
         <button id="apply">Aplicar cambio masivo</button>
       </div>
+      <div class="row" data-for="p3">
+        <button id="mkbtn">Crear botones</button>
+      </div>
+      <div class="row" data-for="p4">
+        <button id="mkcol">Crear colores</button>
+      </div>
     </div>
 
     <datalist id="fonts"></datalist>
@@ -499,7 +624,7 @@
     <script>
       const $ = (id) => document.getElementById(id);
       const send = (m) => parent.postMessage({ pluginMessage: m }, "*");
-      const btns = ["create", "apply", "rescan"].map($);
+      const btns = ["create", "apply", "rescan", "mkbtn", "mkcol"].map($);
       const lock = (v) => btns.forEach((b) => (b.disabled = v));
       const checked = (sel) =>
         Array.from(document.querySelectorAll(sel + ":checked")).map(
@@ -559,6 +684,45 @@
           },
         });
       };
+      $("mkbtn").onclick = () => {
+        const platforms = checked(".bpl");
+        if (!platforms.length)
+          return log("error", "Elige al menos una plataforma.");
+        lock(true);
+        log("info", "Creando botones...");
+        send({
+          type: "buttons",
+          opts: {
+            platforms,
+            primary: $("b_primary").value,
+            secondary: $("b_secondary").value,
+            label: $("b_label").value,
+            proto: $("b_proto").checked,
+          },
+        });
+      };
+      [
+        ["k_primary", "k_primary_hex"],
+        ["k_secondary", "k_secondary_hex"],
+      ].forEach(([c, t]) => {
+        $(c).oninput = () => ($(t).value = $(c).value);
+        $(t).oninput = () => {
+          const v = $(t).value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(v)) $(c).value = v;
+        };
+      });
+      $("mkcol").onclick = () => {
+        lock(true);
+        log("info", "Creando colores...");
+        send({
+          type: "colors",
+          opts: {
+            primary: $("k_primary_hex").value,
+            secondary: $("k_secondary_hex").value,
+            dashboard: $("k_dash").checked,
+          },
+        });
+      };
       $("rescan").onclick = () => send({ type: "scan" });
 
       let first = true;
@@ -567,6 +731,16 @@
         if (!m) return;
         if (m.type === "status") log(m.level, m.text);
         if (m.type === "done") lock(false);
+        if (m.type === "colors-saved" && m.saved) {
+          if (m.saved.primary) {
+            $("k_primary").value = m.saved.primary;
+            $("k_primary_hex").value = m.saved.primary;
+          }
+          if (m.saved.secondary) {
+            $("k_secondary").value = m.saved.secondary;
+            $("k_secondary_hex").value = m.saved.secondary;
+          }
+        }
         if (m.type === "scan-result") {
           const cur = $("current");
           cur.innerHTML = "";
