@@ -331,16 +331,15 @@
       }
 
       #log {
-        height: 108px;
+        max-height: 72px;
         overflow-y: auto;
         padding: 8px 16px 12px;
         background: var(--surface);
         border-top: 1px solid var(--bd);
         font-size: 11px;
       }
-      #log:empty::before {
-        content: "La actividad aparecerá aquí.";
-        color: var(--mut);
+      #log:empty {
+        display: none;
       }
       #log div {
         position: relative;
@@ -525,7 +524,6 @@
       <div class="pane" id="p3">
         <div class="card">
           <h3>Plataformas</h3>
-          <p class="sub">Se crea un set de botones por cada una.</p>
           <div class="pills">
             <label class="chk"
               ><input
@@ -649,11 +647,12 @@
         );
 
       function log(level, text) {
+        if (level !== "ok" && level !== "error") return;
         const d = document.createElement("div");
         d.className = level;
         d.textContent = text;
+        $("log").innerHTML = "";
         $("log").appendChild(d);
-        $("log").scrollTop = 1e9;
       }
       document.querySelectorAll(".tab").forEach(
         (t) =>
