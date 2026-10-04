@@ -1,3 +1,6 @@
+import { createSystem } from "./typography";
+import { ensureColorStyles, ColorMaps } from "./colors";
+
 type Level = "info" | "ok" | "warn" | "error";
 const say = (level: Level, text: string) =>
   figma.ui.postMessage({ type: "status", level, text });
@@ -8,11 +11,17 @@ export interface ButtonOpts {
   secondary: string;
   label: string;
   proto: boolean;
+  typo: {
+    primary: string;
+    secondary: string;
+    buttonsUse: "Primary" | "Secondary";
+  };
 }
 
 type Platform = "Web" | "Mobile";
 type St = "Default" | "Hover" | "Pressed" | "Disabled";
 type Col = "Primary" | "Secondary";
+type Tone = PaintStyle | RGB;
 
 const STATES: St[] = ["Default", "Hover", "Pressed", "Disabled"];
 const TYPES = ["Filled", "Outlined"];
@@ -28,62 +37,31 @@ const SPEC: Record<
     gap: number;
     icon: number;
     dot: number;
-    radius: number;
     minW: number;
   }
 > = {
-  Web: { padX: 10, padY: 10, gap: 10, icon: 20, dot: 12, radius: 8, minW: 157 },
-  Mobile: {
-    padX: 10,
-    padY: 10,
-    gap: 10,
-    icon: 16,
-    dot: 10,
-    radius: 8,
-    minW: 150,
-  },
+  Web: { padX: 10, padY: 10, gap: 10, icon: 20, dot: 12, minW: 157 },
+  Mobile: { padX: 10, padY: 10, gap: 10, icon: 16, dot: 10, minW: 150 },
 };
 
 const WHITE: RGB = { r: 1, g: 1, b: 1 };
-const BLACK: RGB = { r: 0, g: 0, b: 0 };
+const INK: RGB = { r: 0.12, g: 0.16, b: 0.21 };
 const GRID_X = 96;
 const GRID_Y = 24;
 const PAD = 56;
 const MARGIN = 100;
-const INK: RGB = { r: 0.12, g: 0.16, b: 0.21 };
 
 const solid = (c: RGB): Paint[] => [{ type: "SOLID", color: c }];
+const isStyle = (t: Tone): t is PaintStyle => "id" in t;
 
-function hex(h: string): RGB {
-  const s = h.replace("#", "");
-  const full =
-    s.length === 3
-      ? s
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : s;
-  const n = parseInt(full, 16);
-  return {
-    r: ((n >> 16) & 255) / 255,
-    g: ((n >> 8) & 255) / 255,
-    b: (n & 255) / 255,
-  };
+async function fillTone(n: MinimalFillsMixin, t: Tone) {
+  if (isStyle(t)) await n.setFillStyleIdAsync(t.id);
+  else n.fills = solid(t);
 }
 
-const mix = (a: RGB, b: RGB, t: number): RGB => ({
-  r: a.r + (b.r - a.r) * t,
-  g: a.g + (b.g - a.g) * t,
-  b: a.b + (b.b - a.b) * t,
-});
-
-function palette(base: RGB): Record<St, RGB> {
-  return {
-    Default: base,
-    Hover: mix(base, WHITE, 0.34),
-    Pressed: mix(base, BLACK, 0.27),
-    Disabled: mix(base, WHITE, 0.7),
-  };
+async function strokeTone(n: MinimalStrokesMixin, t: Tone) {
+  if (isStyle(t)) await n.setStrokeStyleIdAsync(t.id);
+  else n.strokes = solid(t);
 }
 
 async function textStyle(platform: Platform) {
@@ -112,7 +90,7 @@ async function fallbackFont(): Promise<FontName> {
   return pick;
 }
 
-async function makeLabel(chars: string, style: TextStyle | null, color: RGB) {
+async function makeLabel(chars: string, style: TextStyle | null, tone: Tone) {
   const frame = figma.createFrame();
   frame.name = "Label";
   frame.fills = [];
@@ -130,12 +108,11 @@ async function makeLabel(chars: string, style: TextStyle | null, color: RGB) {
       await figma.loadFontAsync(style.fontName);
       await t.setTextStyleIdAsync(style.id);
     } else {
-      const fn = await fallbackFont();
-      t.fontName = fn;
+      t.fontName = await fallbackFont();
       t.fontSize = 16;
     }
     t.characters = chars;
-    t.fills = solid(color);
+    await fillTone(t, tone);
     frame.appendChild(t);
     return frame;
   } catch (e) {
@@ -145,7 +122,7 @@ async function makeLabel(chars: string, style: TextStyle | null, color: RGB) {
   }
 }
 
-function makeIcon(size: number, dot: number, color: RGB) {
+async function makeIcon(size: number, dot: number, tone: Tone) {
   const f = figma.createFrame();
   f.name = "Icon";
   f.fills = [];
@@ -159,7 +136,7 @@ function makeIcon(size: number, dot: number, color: RGB) {
   const e = figma.createEllipse();
   e.name = "Dot";
   e.resize(dot, dot);
-  e.fills = solid(color);
+  await fillTone(e, tone);
   f.appendChild(e);
   return f;
 }
@@ -173,63 +150,71 @@ interface VariantArgs {
   shape: string;
   icon: string;
   state: St;
-  pal: Record<Col, Record<St, RGB>>;
+  tones: ColorMaps;
 }
 
 async function makeVariant(a: VariantArgs) {
   const spec = SPEC[a.platform];
-  const p = a.pal[a.color];
+  const T = (name: string): Tone => a.tones[a.color].get(name) as PaintStyle;
   const filled = a.type === "Filled";
 
-  let bg: RGB | null = null;
-  let stroke: RGB | null = null;
-  let fg: RGB = WHITE;
+  let bg: Tone | null = null;
+  let stroke: Tone | null = null;
+  let fg: Tone = WHITE;
 
   if (filled) {
-    bg = p[a.state];
+    if (a.state === "Default") bg = T("Normal");
+    else if (a.state === "Hover") bg = T("Normal :hover");
+    else if (a.state === "Pressed") bg = T("Normal :active");
+    else {
+      bg = T("Light");
+      fg = T("Light :active");
+    }
   } else if (a.state === "Default") {
-    fg = p.Default;
+    fg = T("Normal");
   } else if (a.state === "Hover") {
-    stroke = p.Default;
-    fg = p.Default;
+    stroke = T("Normal :hover");
+    fg = T("Normal :hover");
   } else if (a.state === "Pressed") {
-    bg = p.Pressed;
+    bg = T("Normal :active");
   } else {
-    stroke = p.Disabled;
-    fg = p.Disabled;
+    stroke = T("Light :active");
+    fg = T("Light :active");
   }
 
   const c = figma.createComponent();
-  c.name = `Type=${a.color}, State=${a.state}, Icon=${a.icon}, Style=${a.type}, Border Radius=${a.shape}`;
-  c.layoutMode = "HORIZONTAL";
-  c.primaryAxisSizingMode = "AUTO";
-  c.counterAxisSizingMode = "AUTO";
-  c.primaryAxisAlignItems = "CENTER";
-  c.counterAxisAlignItems = "CENTER";
-  c.itemSpacing = spec.gap;
-  c.paddingLeft = c.paddingRight = spec.padX;
-  c.paddingTop = c.paddingBottom = spec.padY;
-  c.minWidth = spec.minW;
-  c.clipsContent = false;
-  c.cornerRadius = a.shape === "Pill" ? 32 : Number(a.shape);
-  c.fills = bg ? solid(bg) : [];
-  if (stroke) {
-    c.strokes = solid(stroke);
-    c.strokeWeight = 1;
-    c.strokeAlign = "INSIDE";
-  }
-
-  let label: FrameNode;
   try {
-    label = await makeLabel(a.text, a.style, fg);
+    c.name = `Type=${a.color}, State=${a.state}, Icon=${a.icon}, Style=${a.type}, Border Radius=${a.shape}`;
+    c.layoutMode = "HORIZONTAL";
+    c.primaryAxisSizingMode = "AUTO";
+    c.counterAxisSizingMode = "AUTO";
+    c.primaryAxisAlignItems = "CENTER";
+    c.counterAxisAlignItems = "CENTER";
+    c.itemSpacing = spec.gap;
+    c.paddingLeft = c.paddingRight = spec.padX;
+    c.paddingTop = c.paddingBottom = spec.padY;
+    c.minWidth = spec.minW;
+    c.clipsContent = false;
+    c.cornerRadius = a.shape === "Pill" ? 32 : Number(a.shape);
+    if (bg) await fillTone(c, bg);
+    else c.fills = [];
+    if (stroke) {
+      await strokeTone(c, stroke);
+      c.strokeWeight = 1;
+      c.strokeAlign = "INSIDE";
+    }
+
+    const label = await makeLabel(a.text, a.style, fg);
+    if (a.icon === "Left Icon")
+      c.appendChild(await makeIcon(spec.icon, spec.dot, fg));
+    c.appendChild(label);
+    if (a.icon === "Right Icon")
+      c.appendChild(await makeIcon(spec.icon, spec.dot, fg));
+    return c;
   } catch (e) {
     c.remove();
     throw e;
   }
-  if (a.icon === "Left Icon") c.appendChild(makeIcon(spec.icon, spec.dot, fg));
-  c.appendChild(label);
-  if (a.icon === "Right Icon") c.appendChild(makeIcon(spec.icon, spec.dot, fg));
-  return c;
 }
 
 const key = (t: string, c: string, s: string, i: string, st: string) =>
@@ -279,7 +264,7 @@ async function headText(
 async function buildSet(
   platform: Platform,
   o: ButtonOpts,
-  pal: Record<Col, Record<St, RGB>>,
+  tones: ColorMaps,
   style: TextStyle | null,
   x: number | null,
 ) {
@@ -325,7 +310,7 @@ async function buildSet(
           shape,
           icon,
           state,
-          pal,
+          tones,
         });
         comps.set(key(type, color, shape, icon, state), node);
         grid.push({ node, col: c, row: r });
@@ -419,22 +404,41 @@ export async function createButtons(o: ButtonOpts) {
     say("error", "Elige al menos una plataforma.");
     return;
   }
-  const pal = {
-    Primary: palette(hex(o.primary)),
-    Secondary: palette(hex(o.secondary)),
-  };
+
+  say("info", "Aplicando colores de la paleta...");
+  const colors = await ensureColorStyles(o.primary, o.secondary);
+  if (!colors) {
+    say("error", "Colores no válidos. Revisa la pestaña Colores.");
+    return;
+  }
+
   const boards: FrameNode[] = [];
   let nextX: number | null = null;
 
   for (const platform of o.platforms) {
-    const style = await textStyle(platform);
+    let style = await textStyle(platform);
+    if (!style) {
+      say(
+        "info",
+        `No hay estilos tipográficos ${platform}. Los creo con la tipografía elegida...`,
+      );
+      await createSystem({
+        platforms: [platform],
+        primary: o.typo.primary,
+        secondary: o.typo.secondary,
+        buttonsUse: o.typo.buttonsUse,
+        dashboard: false,
+      });
+      style = await textStyle(platform);
+    }
     if (!style)
       say(
         "warn",
-        `No encontré ${platform}/Buttons/Button1. Uso Inter SemiBold 16. Crea antes el sistema tipográfico.`,
+        `No pude crear ${platform}/Buttons/Button1. Uso Inter para el texto.`,
       );
+
     say("info", `Creando botones ${platform}...`);
-    const board = await buildSet(platform, o, pal, style, nextX);
+    const board = await buildSet(platform, o, colors.maps, style, nextX);
     nextX = board.x + board.width + 200;
     boards.push(board);
   }

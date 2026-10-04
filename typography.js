@@ -78,7 +78,7 @@ async function resolveFont(family, styleName) {
     }
     return null;
 }
-const saveCfg = (c) => figma.root.setPluginData("typoCfg", JSON.stringify(c));
+const saveCfg = (c) => figma.root.setPluginData("typoCfg", JSON.stringify({ ...c, rev: Date.now() }));
 const loadCfg = () => {
     try {
         return JSON.parse(figma.root.getPluginData("typoCfg") || "{}");
