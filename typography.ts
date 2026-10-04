@@ -215,7 +215,10 @@ async function resolveFont(family: string, styleName: string) {
   return null;
 }
 const saveCfg = (c: object) =>
-  figma.root.setPluginData("typoCfg", JSON.stringify(c));
+  figma.root.setPluginData(
+    "typoCfg",
+    JSON.stringify({ ...c, rev: Date.now() }),
+  );
 const loadCfg = () => {
   try {
     return JSON.parse(figma.root.getPluginData("typoCfg") || "{}");
@@ -224,7 +227,7 @@ const loadCfg = () => {
   }
 };
 
-interface CreateOpts {
+export interface CreateOpts {
   platforms: ("Web" | "Mobile")[];
   primary: string;
   secondary: string;

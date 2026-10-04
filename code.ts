@@ -11,8 +11,8 @@ figma.ui.onmessage = async (msg: any) => {
       sendColorCfg();
     } else if (msg.type === "create") await createSystem(msg.opts);
     else if (msg.type === "apply") await applyFonts(msg.opts);
-    else if (msg.type === "buttons") await createButtons(msg.opts);
     else if (msg.type === "colors") await createColors(msg.opts);
+    else if (msg.type === "buttons") await createButtons(msg.opts);
   } catch (e) {
     figma.ui.postMessage({
       type: "status",

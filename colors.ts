@@ -67,7 +67,10 @@ function scale(base: Rgb8): Swatch[] {
 }
 
 const saveCfg = (c: object) =>
-  figma.root.setPluginData("colorCfg", JSON.stringify(c));
+  figma.root.setPluginData(
+    "colorCfg",
+    JSON.stringify({ ...c, rev: Date.now() }),
+  );
 const loadCfg = () => {
   try {
     return JSON.parse(figma.root.getPluginData("colorCfg") || "{}");
@@ -197,18 +200,19 @@ async function buildBoard(prim: Swatch[], sec: Swatch[]) {
   return root;
 }
 
-export async function createColors(o: ColorOpts) {
-  const p = parseHex(o.primary);
-  const s = parseHex(o.secondary);
-  if (!p || !s) {
-    say("error", "Escribe colores hex válidos, por ejemplo #e8a77b.");
-    return;
-  }
+export type ColorMaps = Record<
+  "Primary" | "Secondary",
+  Map<string, PaintStyle>
+>;
+
+export async function ensureColorStyles(primary: string, secondary: string) {
+  const p = parseHex(primary);
+  const s = parseHex(secondary);
+  if (!p || !s) return null;
   const prim = scale(p);
   const sec = scale(s);
   saveCfg({ primary: prim[4].hex, secondary: sec[4].hex });
 
-  say("info", "Creando estilos de color...");
   const existing = new Map(
     (await figma.getLocalPaintStylesAsync()).map(
       (x) => [x.name, x] as [string, PaintStyle],
@@ -216,14 +220,31 @@ export async function createColors(o: ColorOpts) {
   );
   const a = await upsert("Primary", prim, existing);
   const b = await upsert("Secondary", sec, existing);
-  say(
-    "ok",
-    `Colores: ${a.created + b.created} creados, ${a.updated + b.updated} actualizados.`,
-  );
+
+  const maps: ColorMaps = { Primary: new Map(), Secondary: new Map() };
+  prim.forEach((x) => maps.Primary.set(x.name, x.style as PaintStyle));
+  sec.forEach((x) => maps.Secondary.set(x.name, x.style as PaintStyle));
+  return {
+    prim,
+    sec,
+    maps,
+    created: a.created + b.created,
+    updated: a.updated + b.updated,
+  };
+}
+
+export async function createColors(o: ColorOpts) {
+  say("info", "Creando estilos de color...");
+  const r = await ensureColorStyles(o.primary, o.secondary);
+  if (!r) {
+    say("error", "Escribe colores hex válidos, por ejemplo #e8a77b.");
+    return;
+  }
+  say("ok", `Colores: ${r.created} creados, ${r.updated} actualizados.`);
 
   if (o.dashboard) {
     say("info", "Generando tablero de colores...");
-    const board = await buildBoard(prim, sec);
+    const board = await buildBoard(r.prim, r.sec);
     figma.viewport.scrollAndZoomIntoView([board]);
     say("ok", "Tablero de colores generado.");
   }
