@@ -4,7 +4,7 @@ const say = (level, text) => figma.ui.postMessage({ type: "status", level, text 
 const STATES = ["Default", "Hover", "Pressed", "Disabled"];
 const TYPES = ["Filled", "Outlined"];
 const ICONS = ["No Icon", "Right Icon", "Left Icon"];
-const SHAPES = ["8", "Pill"];
+const SHAPES = ["8", "32"];
 const COLORS = ["Primary", "Secondary"];
 const SPEC = {
     Web: { padX: 10, padY: 10, gap: 10, icon: 20, dot: 12, minW: 157 },
@@ -148,7 +148,7 @@ async function makeVariant(a) {
         c.paddingTop = c.paddingBottom = spec.padY;
         c.minWidth = spec.minW;
         c.clipsContent = false;
-        c.cornerRadius = a.shape === "Pill" ? 999 : Number(a.shape);
+        c.cornerRadius = a.shape === "Pill" ? 32 : Number(a.shape);
         if (bg)
             await fillTone(c, bg);
         else
