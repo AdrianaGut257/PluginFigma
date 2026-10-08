@@ -1,15 +1,26 @@
 const say = (level, text) => figma.ui.postMessage({ type: "status", level, text });
+export const DEFAULT_COLORS = {
+    primary: "#f2aa74",
+    secondary: "#a9ca62",
+    tertiary: "#9fd3e6",
+    error: "#e5565b",
+};
+const GROUPS = ["Primary", "Secondary", "Tertiary", "Error"];
 const STEPS = [
-    { name: "Clear", mode: "tint", f: 0.9 },
-    { name: "Light", mode: "tint", f: 0.59 },
-    { name: "Light :hover", mode: "tint", f: 0.42 },
-    { name: "Light :active", mode: "tint", f: 0.17 },
+    { name: "Light", mode: "tint", f: 0.9 },
+    { name: "Light :hover", mode: "tint", f: 0.85 },
+    { name: "Light :active", mode: "tint", f: 0.69 },
     { name: "Normal", mode: "base", f: 0 },
-    { name: "Normal :hover", mode: "shade", f: 0.7 },
-    { name: "Normal :active", mode: "shade", f: 0.61 },
-    { name: "Dark", mode: "shade", f: 0.45 },
+    { name: "Normal :hover", mode: "shade", f: 0.9 },
+    { name: "Normal :active", mode: "shade", f: 0.8 },
+    { name: "Dark", mode: "shade", f: 0.75 },
+    { name: "Dark :hover", mode: "shade", f: 0.6 },
+    { name: "Dark :active", mode: "shade", f: 0.45 },
+    { name: "Darker", mode: "shade", f: 0.35 },
 ];
+const NORMAL = STEPS.findIndex((s) => s.mode === "base");
 const BLACK = { r: 0, g: 0, b: 0 };
+const WHITE = { r: 1, g: 1, b: 1 };
 const GRAY = { r: 0.6, g: 0.64, b: 0.7 };
 const BORDER = { r: 0.9, g: 0.91, b: 0.95 };
 const solid = (c) => [{ type: "SOLID", color: c }];
@@ -42,6 +53,22 @@ function scale(base) {
         return { name: s.name, c, hex };
     });
 }
+const lin = (v) => {
+    const s = v / 255;
+    return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+};
+const luminance = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+function contrast(a, b) {
+    const la = luminance(a);
+    const lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+function grade(r) {
+    return {
+        large: r >= 4.5 ? "AAA" : r >= 3 ? "AA" : "",
+        normal: r >= 7 ? "AAA" : r >= 4.5 ? "AA" : "",
+    };
+}
 const saveCfg = (c) => figma.root.setPluginData("colorCfg", JSON.stringify({ ...c, rev: Date.now() }));
 const loadCfg = () => {
     try {
@@ -70,6 +97,24 @@ async function txt(chars, size, weight, color) {
     t.fontName = fn;
     t.fontSize = size;
     t.characters = chars;
+    t.fills = solid(color);
+    return t;
+}
+async function gummy(chars, size, weight, color) {
+    if (!fontList)
+        fontList = await figma.listAvailableFontsAsync();
+    const fam = fontList.filter((f) => f.fontName.family === "Sour Gummy");
+    const hit = fam.find((f) => compact(f.fontName.style) === compact(weight)) ||
+        fam.find((f) => compact(f.fontName.style) === "regular") ||
+        fam[0];
+    const fn = hit ? hit.fontName : await inter("Regular");
+    await figma.loadFontAsync(fn);
+    const t = figma.createText();
+    t.fontName = fn;
+    t.fontSize = size;
+    t.lineHeight = { unit: "AUTO" };
+    t.characters = chars;
+    t.textAutoResize = "WIDTH_AND_HEIGHT";
     t.fills = solid(color);
     return t;
 }
@@ -102,17 +147,49 @@ async function upsert(group, sw, existing) {
     }
     return { created, updated };
 }
+async function badge(dot, ratio) {
+    const pill = box("HORIZONTAL", 8);
+    pill.name = "Contrast";
+    pill.counterAxisAlignItems = "CENTER";
+    pill.paddingLeft = 8;
+    pill.paddingRight = 12;
+    pill.paddingTop = 4;
+    pill.paddingBottom = 4;
+    pill.cornerRadius = 100;
+    pill.fills = [{ type: "SOLID", color: WHITE, opacity: 0.8 }];
+    const d = figma.createEllipse();
+    d.resize(20, 20);
+    d.fills = solid(dot);
+    d.strokes = solid(BORDER);
+    d.strokeWeight = 1;
+    pill.appendChild(d);
+    pill.appendChild(await txt(ratio.toFixed(2), 20, "Regular", BLACK));
+    const g = grade(ratio);
+    if (g.large)
+        pill.appendChild(await txt(g.large, 16, "Regular", BLACK));
+    if (g.normal)
+        pill.appendChild(await txt(g.normal, 11, "Regular", BLACK));
+    return pill;
+}
 async function column(title, sw) {
     const col = box("VERTICAL", 34);
     col.name = title;
-    col.appendChild(await txt(title, 56, "Regular", BLACK));
+    col.appendChild(await gummy(title, 56, "Bold", BLACK));
     for (const s of sw) {
         const row = box("HORIZONTAL", 32);
         row.name = s.name;
         row.counterAxisAlignItems = "CENTER";
         const chip = figma.createFrame();
         chip.name = "Swatch";
+        chip.layoutMode = "VERTICAL";
+        chip.primaryAxisSizingMode = "FIXED";
+        chip.counterAxisSizingMode = "FIXED";
         chip.resize(318, 110);
+        chip.primaryAxisAlignItems = "CENTER";
+        chip.counterAxisAlignItems = "MIN";
+        chip.itemSpacing = 8;
+        chip.paddingLeft = 16;
+        chip.paddingRight = 16;
         chip.cornerRadius = 20;
         chip.clipsContent = false;
         chip.fills = solid(toRgb(s.c));
@@ -121,6 +198,8 @@ async function column(title, sw) {
         chip.strokeAlign = "INSIDE";
         if (s.style)
             await chip.setFillStyleIdAsync(s.style.id);
+        chip.appendChild(await badge(BLACK, contrast(s.c, [0, 0, 0])));
+        chip.appendChild(await badge(WHITE, contrast(s.c, [255, 255, 255])));
         const info = box("VERTICAL", 4);
         info.appendChild(await txt(s.name, 26, "Regular", BLACK));
         info.appendChild(await txt(s.hex, 20, "Regular", GRAY));
@@ -131,7 +210,7 @@ async function column(title, sw) {
     }
     return col;
 }
-async function buildBoard(prim, sec) {
+async function buildBoard(scales) {
     const name = "COLORS";
     const old = figma.currentPage.findChild((n) => n.type === "FRAME" && n.name === name);
     const pos = old
@@ -148,39 +227,61 @@ async function buildBoard(prim, sec) {
     root.itemSpacing = 140;
     root.paddingLeft = root.paddingRight = 85;
     root.paddingTop = root.paddingBottom = 85;
-    root.fills = solid({ r: 1, g: 1, b: 1 });
-    root.appendChild(await column("Primary", prim));
-    root.appendChild(await column("Secondary", sec));
+    root.fills = solid(WHITE);
+    for (const g of GROUPS)
+        root.appendChild(await column(g, scales[g]));
     root.x = pos.x;
     root.y = pos.y;
     figma.currentPage.appendChild(root);
     return root;
 }
-export async function ensureColorStyles(primary, secondary) {
-    const p = parseHex(primary);
-    const s = parseHex(secondary);
-    if (!p || !s)
-        return null;
-    const prim = scale(p);
-    const sec = scale(s);
-    saveCfg({ primary: prim[4].hex, secondary: sec[4].hex });
+export async function ensureColorStyles(primary, secondary, tertiary = DEFAULT_COLORS.tertiary, error = DEFAULT_COLORS.error) {
+    const inputs = {
+        Primary: primary,
+        Secondary: secondary,
+        Tertiary: tertiary,
+        Error: error,
+    };
+    const scales = {};
+    for (const g of GROUPS) {
+        const rgb = parseHex(inputs[g]);
+        if (!rgb)
+            return null;
+        scales[g] = scale(rgb);
+    }
+    saveCfg({
+        primary: scales.Primary[NORMAL].hex,
+        secondary: scales.Secondary[NORMAL].hex,
+        tertiary: scales.Tertiary[NORMAL].hex,
+        error: scales.Error[NORMAL].hex,
+    });
     const existing = new Map((await figma.getLocalPaintStylesAsync()).map((x) => [x.name, x]));
-    const a = await upsert("Primary", prim, existing);
-    const b = await upsert("Secondary", sec, existing);
-    const maps = { Primary: new Map(), Secondary: new Map() };
-    prim.forEach((x) => maps.Primary.set(x.name, x.style));
-    sec.forEach((x) => maps.Secondary.set(x.name, x.style));
+    let created = 0;
+    let updated = 0;
+    const maps = {};
+    for (const g of GROUPS) {
+        const r = await upsert(g, scales[g], existing);
+        created += r.created;
+        updated += r.updated;
+        maps[g] = new Map(scales[g].map((x) => [
+            x.name,
+            x.style,
+        ]));
+    }
     return {
-        prim,
-        sec,
+        scales,
+        prim: scales.Primary,
+        sec: scales.Secondary,
+        ter: scales.Tertiary,
+        err: scales.Error,
         maps,
-        created: a.created + b.created,
-        updated: a.updated + b.updated,
+        created,
+        updated,
     };
 }
 export async function createColors(o) {
     say("info", "Creando estilos de color...");
-    const r = await ensureColorStyles(o.primary, o.secondary);
+    const r = await ensureColorStyles(o.primary, o.secondary, o.tertiary || DEFAULT_COLORS.tertiary, o.error || DEFAULT_COLORS.error);
     if (!r) {
         say("error", "Escribe colores hex válidos, por ejemplo #e8a77b.");
         return;
@@ -188,7 +289,7 @@ export async function createColors(o) {
     say("ok", `Colores: ${r.created} creados, ${r.updated} actualizados.`);
     if (o.dashboard) {
         say("info", "Generando tablero de colores...");
-        const board = await buildBoard(r.prim, r.sec);
+        const board = await buildBoard(r.scales);
         figma.viewport.scrollAndZoomIntoView([board]);
         say("ok", "Tablero de colores generado.");
     }

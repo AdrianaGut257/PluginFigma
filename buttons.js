@@ -52,6 +52,19 @@ async function fallbackFont() {
     fallbackCache = pick;
     return pick;
 }
+let fontListCache = null;
+const compactName = (v) => v.replace(/[\s\-_]/g, "").toLowerCase();
+async function gummyFont(weight) {
+    if (!fontListCache)
+        fontListCache = await figma.listAvailableFontsAsync();
+    const fam = fontListCache.filter((f) => f.fontName.family === "Sour Gummy");
+    const hit = fam.find((f) => compactName(f.fontName.style) === compactName(weight)) ||
+        fam.find((f) => compactName(f.fontName.style) === "regular") ||
+        fam[0];
+    const fn = hit ? hit.fontName : await fallbackFont();
+    await figma.loadFontAsync(fn);
+    return fn;
+}
 async function makeLabel(chars, style, tone) {
     const frame = figma.createFrame();
     frame.name = "Label";
@@ -189,8 +202,7 @@ const go = (id, trigger) => ({
     ],
 });
 async function headText(board, chars, size, x, y, w) {
-    const fn = { family: "Inter", style: "Bold" };
-    await figma.loadFontAsync(fn);
+    const fn = await gummyFont("Bold");
     const t = figma.createText();
     t.fontName = fn;
     t.fontSize = size;

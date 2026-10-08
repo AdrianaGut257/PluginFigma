@@ -590,17 +590,27 @@
         <div class="card">
           <h3>Colores base</h3>
           <p class="sub">
-            Se generan 8 tonos por color, de Clear a Dark, con sus estados.
+            Se generan 10 tonos por color, de Light a Darker, con sus estados.
           </p>
           <label class="f">Primary</label>
           <div class="hexrow">
-            <input type="color" id="k_primary" value="#e8a77b" />
-            <input type="text" id="k_primary_hex" value="#e8a77b" />
+            <input type="color" id="k_primary" value="#f2aa74" />
+            <input type="text" id="k_primary_hex" value="#f2aa74" />
           </div>
           <label class="f">Secondary</label>
           <div class="hexrow">
-            <input type="color" id="k_secondary" value="#9caf88" />
-            <input type="text" id="k_secondary_hex" value="#9caf88" />
+            <input type="color" id="k_secondary" value="#a9ca62" />
+            <input type="text" id="k_secondary_hex" value="#a9ca62" />
+          </div>
+          <label class="f">Tertiary</label>
+          <div class="hexrow">
+            <input type="color" id="k_tertiary" value="#9fd3e6" />
+            <input type="text" id="k_tertiary_hex" value="#9fd3e6" />
+          </div>
+          <label class="f">Error</label>
+          <div class="hexrow">
+            <input type="color" id="k_error" value="#e5565b" />
+            <input type="text" id="k_error_hex" value="#e5565b" />
           </div>
           <label class="chk switch">
             <span>Generar tablero en el lienzo</span>
@@ -725,6 +735,8 @@
       const COLOR_GROUPS = [
         ["k_primary", "k_primary_hex", "b_primary", "b_primary_hex"],
         ["k_secondary", "k_secondary_hex", "b_secondary", "b_secondary_hex"],
+        ["k_tertiary", "k_tertiary_hex"],
+        ["k_error", "k_error_hex"],
       ];
       function setColor(group, hex) {
         group.forEach((id) => {
@@ -745,10 +757,10 @@
           ? [1, 3, 5].map((i) => parseInt(h.trim().slice(i, i + 2), 16))
           : null;
       const PAL = [
-        ["Light", "t", 0.59],
+        ["Light", "t", 0.9],
         ["Normal", "b", 0],
-        ["Normal :hover", "s", 0.7],
-        ["Normal :active", "s", 0.61],
+        ["Normal :hover", "s", 0.9],
+        ["Normal :active", "s", 0.8],
       ];
       function renderLinked() {
         [
@@ -803,6 +815,8 @@
           opts: {
             primary: $("k_primary_hex").value,
             secondary: $("k_secondary_hex").value,
+            tertiary: $("k_tertiary_hex").value,
+            error: $("k_error_hex").value,
             dashboard: $("k_dash").checked,
           },
         });
@@ -821,6 +835,8 @@
           colorRev = m.saved.rev;
           if (m.saved.primary) setColor(COLOR_GROUPS[0], m.saved.primary);
           if (m.saved.secondary) setColor(COLOR_GROUPS[1], m.saved.secondary);
+          if (m.saved.tertiary) setColor(COLOR_GROUPS[2], m.saved.tertiary);
+          if (m.saved.error) setColor(COLOR_GROUPS[3], m.saved.error);
           renderLinked();
         }
         if (m.type === "scan-result") {

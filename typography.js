@@ -1,28 +1,34 @@
 const say = (level, text) => figma.ui.postMessage({ type: "status", level, text });
 const T = (id, label, g, w, size, lh, ls, d) => ({ id, label, g, w, size, lh, ls, d });
 const WEB = [
-    T("H1", "Heading1", "Primary", "Bold", 64, 72, -0.5, "Títulos principales de la pantalla"),
-    T("H2", "Heading2", "Primary", "Bold", 48, 56, 0, "Títulos de secciones principales"),
-    T("H3", "Heading3", "Primary", "Bold", 36, 44, 0, "Títulos de secciones secundarias"),
-    T("H4", "Heading4", "Primary", "SemiBold", 28, 36, 0, "Encabezados pequeños o elementos destacados"),
-    T("Subtitle1", "Subtitle1", "Primary", "SemiBold", 18, 26, 0, "Subtítulos y textos de apoyo destacados"),
-    T("Body1", "Body1", "Secondary", "Regular", 20, 28, -1, "Texto principal y contenido informativo"),
-    T("Body2", "Body2", "Secondary", "Regular", 16, 24, 0, "Texto secundario y descripciones"),
-    T("Body3", "Body3", "Secondary", "Medium", 14, 18, 0, "Texto auxiliar y elementos de interfaz pequeños"),
-    T("Caption1", "Caption 1", "Secondary", "SemiBold", 12, 16, -0.3, "Información secundaria, etiquetas o metadatos destacados"),
-    T("Caption2", "Caption 2", "Secondary", "Regular", 12, 16, -0.3, "Información auxiliar de menor prioridad"),
-    T("Button1", "Button 1", "Buttons", "SemiBold", 16, 24, -0.3, "Acciones principales y botones destacados"),
-    T("Button2", "Button 2", "Buttons", "SemiBold", 14, 20, -0.3, "Acciones secundarias o botones pequeños"),
+    T("H1", "Heading1", "Primary", "Bold", 70, 80, 0, "Título principal de la pantalla"),
+    T("H2", "Heading2", "Primary", "Bold", 56, 64, 0, "Títulos de secciones secundarias."),
+    T("H3", "Heading3", "Primary", "Bold", 45, 51, 0, "Títulos de bloques de contenido."),
+    T("H4", "Heading4", "Primary", "SemiBold", 36, 41, 0, "Títulos de tarjetas y diálogos."),
+    T("Subtitle1", "Subtitle1", "Primary", "SemiBold", 29, 33, 0.15, "Subtítulos de alta prioridad."),
+    T("Subtitle2", "Subtitle2", "Primary", "SemiBold", 23, 26, 0.1, "Subtítulos estándar de componentes."),
+    T("Body1", "Body1", "Secondary", "Regular", 18, 21, 0.5, "Texto principal para lectura larga."),
+    T("Body2", "Body2", "Secondary", "Regular", 14, 17, 0.25, "Texto secundario y descripciones cortas."),
+    T("Body3", "Body3", "Secondary", "Medium", 11, 14, 0.4, "Texto auxiliar e interfaz pequeña."),
+    T("Caption1", "Caption 1", "Secondary", "SemiBold", 9, 11, 0.5, "Etiquetas, metadatos y categorías."),
+    T("Caption2", "Caption 2", "Secondary", "Regular", 7, 9, 0.5, "Información legal y mínima prioridad."),
+    T("Button1", "Button 1", "Buttons", "SemiBold", 18, 21, 0.1, "Botones principales y llamadas a la acción."),
+    T("Button2", "Button 2", "Buttons", "SemiBold", 14, 17, 0.5, "Botones secundarios, enlaces y pestañas."),
 ];
 const MOB = {
-    H1: [36, 38],
-    H2: [24, 30],
-    H3: [20, 26],
-    H4: [18, 20],
-    Subtitle1: [16, 20],
-    Body1: [18, 24],
-    Body2: [16, 21],
-    Button2: [14, 16],
+    H1: [36, 43],
+    H2: [32, 38],
+    H3: [28, 34],
+    H4: [25, 30],
+    Subtitle1: [22, 27],
+    Subtitle2: [20, 24],
+    Body1: [18, 21],
+    Body2: [16, 19],
+    Body3: [14, 17],
+    Caption1: [11, 15],
+    Caption2: [10, 13],
+    Button1: [16, 19],
+    Button2: [14, 17],
 };
 const MOBILE = WEB.map((t) => MOB[t.id] ? { ...t, size: MOB[t.id][0], lh: MOB[t.id][1] } : t);
 let fontsCache = null;
@@ -275,8 +281,9 @@ async function buildDashboard(platform, toks, styles, x) {
         root.appendChild(line());
         root.appendChild(await gummy(g, pick(bold, "H2").fontSize, "Bold", DARK));
         const head = fbox("HORIZONTAL", 0, CW);
+        const scaleName = platform === "Mobile" ? "Major second(1.125)" : "Major third(1.250)";
         const heads = [
-            "Scale",
+            `Scale/${scaleName}`,
             "Weight",
             "Size",
             "Line-Height",
