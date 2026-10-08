@@ -459,7 +459,7 @@ async function buildDashboard(
     );
     const head = fbox("HORIZONTAL", 0, CW);
     const heads = [
-      "Scale",
+      "Scale/Major second(1.125)",
       "Weight",
       "Size",
       "Line-Height",
