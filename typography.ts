@@ -33,7 +33,7 @@ const WEB: Tok[] = [
     70,
     28,
     0,
-    "Títulos principales de la pantalla",
+    "Título principal de la pantalla",
   ),
   T(
     "H2",
@@ -43,7 +43,7 @@ const WEB: Tok[] = [
     56,
     28,
     0,
-    "Títulos de secciones principales",
+    "Títulos de secciones secundarias.",
   ),
   T(
     "H3",
@@ -53,7 +53,7 @@ const WEB: Tok[] = [
     45,
     44,
     0,
-    "Títulos de secciones secundarias",
+    "Títulos de bloques de contenido.",
   ),
   T(
     "H4",
@@ -63,7 +63,7 @@ const WEB: Tok[] = [
     36,
     36,
     0,
-    "Encabezados pequeños o elementos destacados",
+    "Títulos de tarjetas y diálogos.",
   ),
   T(
     "Subtitle1",
@@ -73,7 +73,7 @@ const WEB: Tok[] = [
     29,
     20,
     0.15,
-    "Subtítulos y textos de apoyo destacados",
+    "Subtítulos de alta prioridad.",
   ),
   T(
     "Subtitle2",
@@ -83,7 +83,7 @@ const WEB: Tok[] = [
     23,
     20,
     0.1,
-    "Subtítulos y textos de apoyo destacados",
+    "Subtítulos estándar de componentes.",
   ),
   T(
     "Body1",
@@ -93,7 +93,7 @@ const WEB: Tok[] = [
     18,
     28,
     0.5,
-    "Texto principal y contenido informativo",
+    "Texto principal para lectura larga.",
   ),
   T(
     "Body2",
@@ -103,7 +103,7 @@ const WEB: Tok[] = [
     14,
     24,
     0.25,
-    "Texto secundario y descripciones",
+    "Texto secundario y descripciones cortas.",
   ),
   T(
     "Body3",
@@ -113,7 +113,7 @@ const WEB: Tok[] = [
     11,
     18,
     0.4,
-    "Texto auxiliar y elementos de interfaz pequeños",
+    "Texto auxiliar e interfaz pequeña.",
   ),
   T(
     "Caption1",
@@ -123,7 +123,7 @@ const WEB: Tok[] = [
     9,
     16,
     0.5,
-    "Información secundaria, etiquetas o metadatos destacados",
+    "Etiquetas, metadatos y categorías.",
   ),
   T(
     "Caption2",
@@ -133,7 +133,7 @@ const WEB: Tok[] = [
     7,
     16,
     0.5,
-    "Información auxiliar de menor prioridad",
+    "Información legal y mínima prioridad.",
   ),
   T(
     "Button1",
@@ -143,7 +143,7 @@ const WEB: Tok[] = [
     18,
     24,
     0.1,
-    "Acciones principales y botones destacados",
+    "Botones principales y llamadas a la acción.",
   ),
   T(
     "Button2",
@@ -153,7 +153,7 @@ const WEB: Tok[] = [
     14,
     20,
     0.5,
-    "Acciones secundarias o botones pequeños",
+    "Botones secundarios, enlaces y pestañas.",
   ),
 ];
 const MOB: Record<string, [number, number]> = {
