@@ -235,12 +235,13 @@ async function buildBoard(scales) {
     figma.currentPage.appendChild(root);
     return root;
 }
-export async function ensureColorStyles(primary, secondary, tertiary = DEFAULT_COLORS.tertiary, error = DEFAULT_COLORS.error) {
+export async function ensureColorStyles(primary, secondary, tertiary, error) {
+    const saved = loadCfg();
     const inputs = {
         Primary: primary,
         Secondary: secondary,
-        Tertiary: tertiary,
-        Error: error,
+        Tertiary: tertiary || saved.tertiary || DEFAULT_COLORS.tertiary,
+        Error: error || saved.error || DEFAULT_COLORS.error,
     };
     const scales = {};
     for (const g of GROUPS) {
@@ -281,7 +282,7 @@ export async function ensureColorStyles(primary, secondary, tertiary = DEFAULT_C
 }
 export async function createColors(o) {
     say("info", "Creando estilos de color...");
-    const r = await ensureColorStyles(o.primary, o.secondary, o.tertiary || DEFAULT_COLORS.tertiary, o.error || DEFAULT_COLORS.error);
+    const r = await ensureColorStyles(o.primary, o.secondary, o.tertiary, o.error);
     if (!r) {
         say("error", "Escribe colores hex válidos, por ejemplo #e8a77b.");
         return;

@@ -294,14 +294,15 @@ export type ColorMaps = Record<Group, Map<string, PaintStyle>>;
 export async function ensureColorStyles(
   primary: string,
   secondary: string,
-  tertiary: string = DEFAULT_COLORS.tertiary,
-  error: string = DEFAULT_COLORS.error,
+  tertiary?: string,
+  error?: string,
 ) {
+  const saved = loadCfg();
   const inputs: Record<Group, string> = {
     Primary: primary,
     Secondary: secondary,
-    Tertiary: tertiary,
-    Error: error,
+    Tertiary: tertiary || saved.tertiary || DEFAULT_COLORS.tertiary,
+    Error: error || saved.error || DEFAULT_COLORS.error,
   };
   const scales = {} as Record<Group, Swatch[]>;
   for (const g of GROUPS) {
@@ -354,8 +355,8 @@ export async function createColors(o: ColorOpts) {
   const r = await ensureColorStyles(
     o.primary,
     o.secondary,
-    o.tertiary || DEFAULT_COLORS.tertiary,
-    o.error || DEFAULT_COLORS.error,
+    o.tertiary,
+    o.error,
   );
   if (!r) {
     say("error", "Escribe colores hex válidos, por ejemplo #e8a77b.");

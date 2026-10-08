@@ -552,16 +552,32 @@
           </p>
           <label class="f">Primary</label>
           <div class="hexrow">
-            <input type="color" id="b_primary" value="#e8a77b" />
-            <input type="text" id="b_primary_hex" value="#e8a77b" />
+            <input type="color" id="b_primary" value="#f2aa74" />
+            <input type="text" id="b_primary_hex" value="#f2aa74" />
           </div>
           <div class="pal" id="pal_primary" style="margin-top: 8px"></div>
+
           <label class="f">Secondary</label>
           <div class="hexrow">
-            <input type="color" id="b_secondary" value="#9caf88" />
-            <input type="text" id="b_secondary_hex" value="#9caf88" />
+            <input type="color" id="b_secondary" value="#a9ca62" />
+            <input type="text" id="b_secondary_hex" value="#a9ca62" />
           </div>
           <div class="pal" id="pal_secondary" style="margin-top: 8px"></div>
+
+          <label class="f">Tertiary</label>
+          <div class="hexrow">
+            <input type="color" id="b_tertiary" value="#9fd3e6" />
+            <input type="text" id="b_tertiary_hex" value="#9fd3e6" />
+          </div>
+          <div class="pal" id="pal_tertiary" style="margin-top: 8px"></div>
+
+          <label class="f">Error</label>
+          <div class="hexrow">
+            <input type="color" id="b_error" value="#e5565b" />
+            <input type="text" id="b_error_hex" value="#e5565b" />
+          </div>
+          <div class="pal" id="pal_error" style="margin-top: 8px"></div>
+
           <label class="f">Fuente del texto</label>
           <div id="typo_summary" class="chip"></div>
           <div class="hint">
@@ -722,6 +738,8 @@
             platforms,
             primary: $("k_primary_hex").value,
             secondary: $("k_secondary_hex").value,
+            tertiary: $("k_tertiary_hex").value,
+            error: $("k_error_hex").value,
             label: $("b_label").value,
             proto: $("b_proto").checked,
             typo: {
@@ -735,8 +753,8 @@
       const COLOR_GROUPS = [
         ["k_primary", "k_primary_hex", "b_primary", "b_primary_hex"],
         ["k_secondary", "k_secondary_hex", "b_secondary", "b_secondary_hex"],
-        ["k_tertiary", "k_tertiary_hex"],
-        ["k_error", "k_error_hex"],
+        ["k_tertiary", "k_tertiary_hex", "b_tertiary", "b_tertiary_hex"],
+        ["k_error", "k_error_hex", "b_error", "b_error_hex"],
       ];
       function setColor(group, hex) {
         group.forEach((id) => {
@@ -766,6 +784,8 @@
         [
           ["pal_primary", "k_primary_hex"],
           ["pal_secondary", "k_secondary_hex"],
+          ["pal_tertiary", "k_tertiary_hex"],
+          ["pal_error", "k_error_hex"],
         ].forEach(([box, src]) => {
           const base = parseHex($(src).value);
           const el = $(box);
@@ -799,10 +819,18 @@
         "k_primary_hex",
         "k_secondary",
         "k_secondary_hex",
+        "k_tertiary",
+        "k_tertiary_hex",
+        "k_error",
+        "k_error_hex",
         "b_primary",
         "b_primary_hex",
         "b_secondary",
         "b_secondary_hex",
+        "b_tertiary",
+        "b_tertiary_hex",
+        "b_error",
+        "b_error_hex",
         "c_primary",
         "c_secondary",
       ].forEach((id) => $(id).addEventListener("input", renderLinked));
