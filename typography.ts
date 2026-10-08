@@ -72,7 +72,7 @@ const WEB: Tok[] = [
     "SemiBold",
     29,
     20,
-    0,
+    0.15,
     "Subtítulos y textos de apoyo destacados",
   ),
   T(
@@ -82,7 +82,7 @@ const WEB: Tok[] = [
     "SemiBold",
     23,
     20,
-    0,
+    0.1,
     "Subtítulos y textos de apoyo destacados",
   ),
   T(
@@ -92,7 +92,7 @@ const WEB: Tok[] = [
     "Regular",
     18,
     28,
-    -1,
+    0.5,
     "Texto principal y contenido informativo",
   ),
   T(
@@ -102,7 +102,7 @@ const WEB: Tok[] = [
     "Regular",
     14,
     24,
-    0,
+    0.25,
     "Texto secundario y descripciones",
   ),
   T(
@@ -112,7 +112,7 @@ const WEB: Tok[] = [
     "Medium",
     11,
     18,
-    0,
+    0.4,
     "Texto auxiliar y elementos de interfaz pequeños",
   ),
   T(
@@ -122,7 +122,7 @@ const WEB: Tok[] = [
     "SemiBold",
     9,
     16,
-    -0.3,
+    0.5,
     "Información secundaria, etiquetas o metadatos destacados",
   ),
   T(
@@ -132,7 +132,7 @@ const WEB: Tok[] = [
     "Regular",
     7,
     16,
-    -0.3,
+    0.5,
     "Información auxiliar de menor prioridad",
   ),
   T(
@@ -142,7 +142,7 @@ const WEB: Tok[] = [
     "SemiBold",
     18,
     24,
-    -0.3,
+    0.1,
     "Acciones principales y botones destacados",
   ),
   T(
@@ -152,7 +152,7 @@ const WEB: Tok[] = [
     "SemiBold",
     14,
     20,
-    -0.3,
+    0.5,
     "Acciones secundarias o botones pequeños",
   ),
 ];
