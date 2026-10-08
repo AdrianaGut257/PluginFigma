@@ -104,6 +104,25 @@ async function txt(chars: string, size: number, weight: string, color: RGB) {
   return t;
 }
 
+async function gummy(chars: string, size: number, weight: string, color: RGB) {
+  if (!fontList) fontList = await figma.listAvailableFontsAsync();
+  const fam = fontList.filter((f) => f.fontName.family === "Sour Gummy");
+  const hit =
+    fam.find((f) => compact(f.fontName.style) === compact(weight)) ||
+    fam.find((f) => compact(f.fontName.style) === "regular") ||
+    fam[0];
+  const fn = hit ? hit.fontName : await inter("Regular");
+  await figma.loadFontAsync(fn);
+  const t = figma.createText();
+  t.fontName = fn;
+  t.fontSize = size;
+  t.lineHeight = { unit: "AUTO" };
+  t.characters = chars;
+  t.textAutoResize = "WIDTH_AND_HEIGHT";
+  t.fills = solid(color);
+  return t;
+}
+
 function box(dir: "HORIZONTAL" | "VERTICAL", gap: number) {
   const f = figma.createFrame();
   f.fills = [];
@@ -141,7 +160,7 @@ async function upsert(
 async function column(title: string, sw: Swatch[]) {
   const col = box("VERTICAL", 34);
   col.name = title;
-  col.appendChild(await txt(title, 56, "Regular", BLACK));
+  col.appendChild(await gummy(title, 56, "Bold", BLACK));
   for (const s of sw) {
     const row = box("HORIZONTAL", 32);
     row.name = s.name;
