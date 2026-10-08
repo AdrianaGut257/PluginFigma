@@ -473,8 +473,10 @@ async function buildDashboard(
       await gummy(g, pick(bold, "H2").fontSize as number, "Bold", DARK),
     );
     const head = fbox("HORIZONTAL", 0, CW);
+    const scaleName =
+      platform === "Mobile" ? "Major second(1.125)" : "Major third(1.250)";
     const heads = [
-      "Scale/Major second(1.125)",
+      `Scale/${scaleName}`,
       "Weight",
       "Size",
       "Line-Height",
