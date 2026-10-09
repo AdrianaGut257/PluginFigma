@@ -9,6 +9,8 @@ export interface ButtonOpts {
   platforms: ("Web" | "Mobile")[];
   primary: string;
   secondary: string;
+  tertiary?: string;
+  error?: string;
   label: string;
   proto: boolean;
   typo: {
@@ -20,14 +22,16 @@ export interface ButtonOpts {
 
 type Platform = "Web" | "Mobile";
 type St = "Default" | "Hover" | "Pressed" | "Disabled";
-type Col = "Primary" | "Secondary";
+type Col = "Primary" | "Secondary" | "Tertiary" | "Error";
 type Tone = PaintStyle | RGB;
 
 const STATES: St[] = ["Default", "Hover", "Pressed", "Disabled"];
 const TYPES = ["Filled", "Outlined"];
 const ICONS = ["No Icon", "Right Icon", "Left Icon"];
 const SHAPES = ["8", "32"];
-const COLORS: Col[] = ["Primary", "Secondary"];
+const COLORS: Col[] = ["Primary", "Secondary", "Tertiary", "Error"];
+const TOTAL =
+  TYPES.length * ICONS.length * SHAPES.length * COLORS.length * STATES.length;
 
 const SPEC: Record<
   Platform,
@@ -53,6 +57,24 @@ const MARGIN = 100;
 
 const solid = (c: RGB): Paint[] => [{ type: "SOLID", color: c }];
 const isStyle = (t: Tone): t is PaintStyle => "id" in t;
+
+// ---- Contraste WCAG: elige texto blanco u oscuro según el fondo ----
+const lin = (v: number) =>
+  v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+const lum = (c: RGB) =>
+  0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+const ratio = (a: RGB, b: RGB) => {
+  const x = lum(a);
+  const y = lum(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+};
+function rgbOf(t: Tone): RGB {
+  if (isStyle(t)) {
+    const p = t.paints[0];
+    return p && p.type === "SOLID" ? p.color : WHITE;
+  }
+  return t;
+}
 
 async function fillTone(n: MinimalFillsMixin, t: Tone) {
   if (isStyle(t)) await n.setFillStyleIdAsync(t.id);
@@ -90,6 +112,21 @@ async function fallbackFont(): Promise<FontName> {
   return pick;
 }
 
+let fontListCache: Font[] | null = null;
+const compactName = (v: string) => v.replace(/[\s\-_]/g, "").toLowerCase();
+
+async function gummyFont(weight: string): Promise<FontName> {
+  if (!fontListCache) fontListCache = await figma.listAvailableFontsAsync();
+  const fam = fontListCache.filter((f) => f.fontName.family === "Sour Gummy");
+  const hit =
+    fam.find((f) => compactName(f.fontName.style) === compactName(weight)) ||
+    fam.find((f) => compactName(f.fontName.style) === "regular") ||
+    fam[0];
+  const fn = hit ? hit.fontName : await fallbackFont();
+  await figma.loadFontAsync(fn);
+  return fn;
+}
+
 async function makeLabel(chars: string, style: TextStyle | null, tone: Tone) {
   const frame = figma.createFrame();
   frame.name = "Label";
@@ -122,9 +159,11 @@ async function makeLabel(chars: string, style: TextStyle | null, tone: Tone) {
   }
 }
 
-async function makeIcon(size: number, dot: number, tone: Tone) {
-  const f = figma.createFrame();
-  f.name = "Icon";
+// Componente maestro del icono (uno por plataforma). Los botones usan instancias.
+function makeIconMaster(platform: Platform) {
+  const spec = SPEC[platform];
+  const f = figma.createComponent();
+  f.name = `${platform}/Icon`;
   f.fills = [];
   f.clipsContent = false;
   f.layoutMode = "HORIZONTAL";
@@ -132,13 +171,22 @@ async function makeIcon(size: number, dot: number, tone: Tone) {
   f.counterAxisSizingMode = "FIXED";
   f.primaryAxisAlignItems = "CENTER";
   f.counterAxisAlignItems = "CENTER";
-  f.resize(size, size);
+  f.resize(spec.icon, spec.icon);
   const e = figma.createEllipse();
   e.name = "Dot";
-  e.resize(dot, dot);
-  await fillTone(e, tone);
+  e.resize(spec.dot, spec.dot);
+  e.fills = solid(INK);
   f.appendChild(e);
   return f;
+}
+
+// Instancia del icono; solo se cambia el color del punto (override).
+async function makeIcon(master: ComponentNode, tone: Tone) {
+  const inst = master.createInstance();
+  inst.name = "Icon";
+  const dot = inst.findOne((n) => n.type === "ELLIPSE") as EllipseNode | null;
+  if (dot) await fillTone(dot, tone);
+  return inst;
 }
 
 interface VariantArgs {
@@ -151,12 +199,21 @@ interface VariantArgs {
   icon: string;
   state: St;
   tones: ColorMaps;
+  iconMaster: ComponentNode;
 }
 
 async function makeVariant(a: VariantArgs) {
   const spec = SPEC[a.platform];
   const T = (name: string): Tone => a.tones[a.color].get(name) as PaintStyle;
   const filled = a.type === "Filled";
+
+  // Texto sobre un fondo de color: blanco o el tono Darker, el que más contraste dé.
+  const onColor = (bg: Tone): Tone => {
+    const dark = T("Darker");
+    return ratio(rgbOf(bg), rgbOf(dark)) > ratio(rgbOf(bg), WHITE)
+      ? dark
+      : WHITE;
+  };
 
   let bg: Tone | null = null;
   let stroke: Tone | null = null;
@@ -170,6 +227,7 @@ async function makeVariant(a: VariantArgs) {
       bg = T("Light");
       fg = T("Light :active");
     }
+    if (a.state !== "Disabled") fg = onColor(bg);
   } else if (a.state === "Default") {
     fg = T("Normal");
   } else if (a.state === "Hover") {
@@ -177,6 +235,7 @@ async function makeVariant(a: VariantArgs) {
     fg = T("Normal :hover");
   } else if (a.state === "Pressed") {
     bg = T("Normal :active");
+    fg = onColor(bg);
   } else {
     stroke = T("Light :active");
     fg = T("Light :active");
@@ -205,11 +264,10 @@ async function makeVariant(a: VariantArgs) {
     }
 
     const label = await makeLabel(a.text, a.style, fg);
-    if (a.icon === "Left Icon")
-      c.appendChild(await makeIcon(spec.icon, spec.dot, fg));
+    if (a.icon === "Left Icon") c.appendChild(await makeIcon(a.iconMaster, fg));
     c.appendChild(label);
     if (a.icon === "Right Icon")
-      c.appendChild(await makeIcon(spec.icon, spec.dot, fg));
+      c.appendChild(await makeIcon(a.iconMaster, fg));
     return c;
   } catch (e) {
     c.remove();
@@ -246,8 +304,7 @@ async function headText(
   y: number,
   w: number,
 ) {
-  const fn = { family: "Inter", style: "Bold" };
-  await figma.loadFontAsync(fn);
+  const fn = await gummyFont("Bold");
   const t = figma.createText();
   t.fontName = fn;
   t.fontSize = size;
@@ -293,6 +350,7 @@ async function buildSet(
   for (const s of SHAPES)
     for (const c of COLORS) for (const st of STATES) rows.push([s, c, st]);
 
+  const iconMaster = makeIconMaster(platform);
   const comps = new Map<string, ComponentNode>();
   const grid: { node: ComponentNode; col: number; row: number }[] = [];
 
@@ -311,6 +369,7 @@ async function buildSet(
           icon,
           state,
           tones,
+          iconMaster,
         });
         comps.set(key(type, color, shape, icon, state), node);
         grid.push({ node, col: c, row: r });
@@ -320,6 +379,7 @@ async function buildSet(
     }
   } catch (e) {
     grid.forEach((g) => g.node.remove());
+    iconMaster.remove();
     throw e;
   }
 
@@ -396,6 +456,11 @@ async function buildSet(
   board.appendChild(set);
   set.x = MARGIN;
   set.y = HEAD;
+
+  // El icono maestro vive en el tablero, arriba a la izquierda.
+  board.appendChild(iconMaster);
+  iconMaster.x = MARGIN;
+  iconMaster.y = 60;
   return board;
 }
 
@@ -406,7 +471,12 @@ export async function createButtons(o: ButtonOpts) {
   }
 
   say("info", "Aplicando colores de la paleta...");
-  const colors = await ensureColorStyles(o.primary, o.secondary);
+  const colors = await ensureColorStyles(
+    o.primary,
+    o.secondary,
+    o.tertiary,
+    o.error,
+  );
   if (!colors) {
     say("error", "Colores no válidos. Revisa la pestaña Colores.");
     return;
@@ -444,5 +514,8 @@ export async function createButtons(o: ButtonOpts) {
   }
 
   figma.viewport.scrollAndZoomIntoView(boards);
-  say("ok", `Botones listos: ${boards.length} tablero(s) de 96 variantes.`);
+  say(
+    "ok",
+    `Botones listos: ${boards.length} tablero(s) de ${TOTAL} variantes.`,
+  );
 }

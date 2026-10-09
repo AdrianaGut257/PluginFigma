@@ -331,16 +331,15 @@
       }
 
       #log {
-        height: 108px;
+        max-height: 72px;
         overflow-y: auto;
         padding: 8px 16px 12px;
         background: var(--surface);
         border-top: 1px solid var(--bd);
         font-size: 11px;
       }
-      #log:empty::before {
-        content: "La actividad aparecerá aquí.";
-        color: var(--mut);
+      #log:empty {
+        display: none;
       }
       #log div {
         position: relative;
@@ -433,7 +432,6 @@
       <div class="pane on" id="p1">
         <div class="card">
           <h3>Plataformas</h3>
-          <p class="sub">Se crea un set de estilos por cada una.</p>
           <div class="pills">
             <label class="chk"
               ><input
@@ -456,7 +454,6 @@
 
         <div class="card">
           <h3>Fuentes</h3>
-          <p class="sub">Escribe el nombre tal como aparece en Figma.</p>
           <label class="f">Primaria (Headings y Subtitle)</label>
           <input type="text" id="c_primary" list="fonts" value="Inter" />
           <label class="f">Secundaria (Body y Caption)</label>
@@ -527,7 +524,6 @@
       <div class="pane" id="p3">
         <div class="card">
           <h3>Plataformas</h3>
-          <p class="sub">Se crea un set de botones por cada una.</p>
           <div class="pills">
             <label class="chk"
               ><input
@@ -556,16 +552,32 @@
           </p>
           <label class="f">Primary</label>
           <div class="hexrow">
-            <input type="color" id="b_primary" value="#e8a77b" />
-            <input type="text" id="b_primary_hex" value="#e8a77b" />
+            <input type="color" id="b_primary" value="#f2aa74" />
+            <input type="text" id="b_primary_hex" value="#f2aa74" />
           </div>
           <div class="pal" id="pal_primary" style="margin-top: 8px"></div>
+
           <label class="f">Secondary</label>
           <div class="hexrow">
-            <input type="color" id="b_secondary" value="#9caf88" />
-            <input type="text" id="b_secondary_hex" value="#9caf88" />
+            <input type="color" id="b_secondary" value="#a9ca62" />
+            <input type="text" id="b_secondary_hex" value="#a9ca62" />
           </div>
           <div class="pal" id="pal_secondary" style="margin-top: 8px"></div>
+
+          <label class="f">Tertiary</label>
+          <div class="hexrow">
+            <input type="color" id="b_tertiary" value="#9fd3e6" />
+            <input type="text" id="b_tertiary_hex" value="#9fd3e6" />
+          </div>
+          <div class="pal" id="pal_tertiary" style="margin-top: 8px"></div>
+
+          <label class="f">Error</label>
+          <div class="hexrow">
+            <input type="color" id="b_error" value="#e5565b" />
+            <input type="text" id="b_error_hex" value="#e5565b" />
+          </div>
+          <div class="pal" id="pal_error" style="margin-top: 8px"></div>
+
           <label class="f">Fuente del texto</label>
           <div id="typo_summary" class="chip"></div>
           <div class="hint">
@@ -588,31 +600,33 @@
             <span class="track"></span>
           </label>
         </div>
-
-        <div class="hint">
-          Crea un set <b>Buttons</b> por plataforma con 96 variantes. El color y
-          el texto quedan vinculados a los estilos de la paleta y a
-          <b>Buttons/Button1</b>, así que si luego cambias colores o fuentes,
-          los botones se actualizan solos. Si no existen los estilos, se crean
-          con lo elegido en las otras pestañas.
-        </div>
       </div>
 
       <div class="pane" id="p4">
         <div class="card">
           <h3>Colores base</h3>
           <p class="sub">
-            Se generan 8 tonos por color, de Clear a Dark, con sus estados.
+            Se generan 10 tonos por color, de Light a Darker, con sus estados.
           </p>
           <label class="f">Primary</label>
           <div class="hexrow">
-            <input type="color" id="k_primary" value="#e8a77b" />
-            <input type="text" id="k_primary_hex" value="#e8a77b" />
+            <input type="color" id="k_primary" value="#f2aa74" />
+            <input type="text" id="k_primary_hex" value="#f2aa74" />
           </div>
           <label class="f">Secondary</label>
           <div class="hexrow">
-            <input type="color" id="k_secondary" value="#9caf88" />
-            <input type="text" id="k_secondary_hex" value="#9caf88" />
+            <input type="color" id="k_secondary" value="#a9ca62" />
+            <input type="text" id="k_secondary_hex" value="#a9ca62" />
+          </div>
+          <label class="f">Tertiary</label>
+          <div class="hexrow">
+            <input type="color" id="k_tertiary" value="#9fd3e6" />
+            <input type="text" id="k_tertiary_hex" value="#9fd3e6" />
+          </div>
+          <label class="f">Error</label>
+          <div class="hexrow">
+            <input type="color" id="k_error" value="#e5565b" />
+            <input type="text" id="k_error_hex" value="#e5565b" />
           </div>
           <label class="chk switch">
             <span>Generar tablero en el lienzo</span>
@@ -659,11 +673,12 @@
         );
 
       function log(level, text) {
+        if (level !== "ok" && level !== "error") return;
         const d = document.createElement("div");
         d.className = level;
         d.textContent = text;
+        $("log").innerHTML = "";
         $("log").appendChild(d);
-        $("log").scrollTop = 1e9;
       }
       document.querySelectorAll(".tab").forEach(
         (t) =>
@@ -723,6 +738,8 @@
             platforms,
             primary: $("k_primary_hex").value,
             secondary: $("k_secondary_hex").value,
+            tertiary: $("k_tertiary_hex").value,
+            error: $("k_error_hex").value,
             label: $("b_label").value,
             proto: $("b_proto").checked,
             typo: {
@@ -736,6 +753,8 @@
       const COLOR_GROUPS = [
         ["k_primary", "k_primary_hex", "b_primary", "b_primary_hex"],
         ["k_secondary", "k_secondary_hex", "b_secondary", "b_secondary_hex"],
+        ["k_tertiary", "k_tertiary_hex", "b_tertiary", "b_tertiary_hex"],
+        ["k_error", "k_error_hex", "b_error", "b_error_hex"],
       ];
       function setColor(group, hex) {
         group.forEach((id) => {
@@ -756,15 +775,17 @@
           ? [1, 3, 5].map((i) => parseInt(h.trim().slice(i, i + 2), 16))
           : null;
       const PAL = [
-        ["Light", "t", 0.59],
+        ["Light", "t", 0.9],
         ["Normal", "b", 0],
-        ["Normal :hover", "s", 0.7],
-        ["Normal :active", "s", 0.61],
+        ["Normal :hover", "s", 0.9],
+        ["Normal :active", "s", 0.8],
       ];
       function renderLinked() {
         [
           ["pal_primary", "k_primary_hex"],
           ["pal_secondary", "k_secondary_hex"],
+          ["pal_tertiary", "k_tertiary_hex"],
+          ["pal_error", "k_error_hex"],
         ].forEach(([box, src]) => {
           const base = parseHex($(src).value);
           const el = $(box);
@@ -798,10 +819,18 @@
         "k_primary_hex",
         "k_secondary",
         "k_secondary_hex",
+        "k_tertiary",
+        "k_tertiary_hex",
+        "k_error",
+        "k_error_hex",
         "b_primary",
         "b_primary_hex",
         "b_secondary",
         "b_secondary_hex",
+        "b_tertiary",
+        "b_tertiary_hex",
+        "b_error",
+        "b_error_hex",
         "c_primary",
         "c_secondary",
       ].forEach((id) => $(id).addEventListener("input", renderLinked));
@@ -814,6 +843,8 @@
           opts: {
             primary: $("k_primary_hex").value,
             secondary: $("k_secondary_hex").value,
+            tertiary: $("k_tertiary_hex").value,
+            error: $("k_error_hex").value,
             dashboard: $("k_dash").checked,
           },
         });
@@ -832,6 +863,8 @@
           colorRev = m.saved.rev;
           if (m.saved.primary) setColor(COLOR_GROUPS[0], m.saved.primary);
           if (m.saved.secondary) setColor(COLOR_GROUPS[1], m.saved.secondary);
+          if (m.saved.tertiary) setColor(COLOR_GROUPS[2], m.saved.tertiary);
+          if (m.saved.error) setColor(COLOR_GROUPS[3], m.saved.error);
           renderLinked();
         }
         if (m.type === "scan-result") {
